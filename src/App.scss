@@ -1,0 +1,33 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+
+  &.light-mode {
+    background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+    color: #1a202c;
+  }
+
+  &.dark-mode {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    color: #f3f4f6;
+  }
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  .light-mode & {
+    background: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .dark-mode & {
+    background: rgba(17, 24, 39, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

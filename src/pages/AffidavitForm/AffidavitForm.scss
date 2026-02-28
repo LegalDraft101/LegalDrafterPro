@@ -1,0 +1,330 @@
+.form-loading-container,
+.form-error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    gap: 1.5rem;
+}
+
+.affidavit-form-page {
+    padding: 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    height: calc(100vh - 64px);
+    /* Account for header */
+    box-sizing: border-box;
+    overflow: hidden;
+    /* Prevent page-level scroll */
+
+    @media (max-width: 900px) {
+        padding: 1rem 2rem;
+        height: auto;
+        overflow: visible;
+    }
+}
+
+.header-actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.split-layout {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    /* Ensures flex children can shrink and allow internal scrolling */
+
+    @media (max-width: 900px) {
+        flex-direction: column;
+        overflow: visible;
+    }
+}
+
+.glass-pane {
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+
+    .light-mode & {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode & {
+        background: rgba(17, 24, 39, 0.45);
+        /* Deep translucent instead of solid grey */
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.left-pane {
+    flex: 1;
+    overflow-y: auto;
+    gap: 1.5rem;
+
+    /* Custom thin scrollbar for sleekness */
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+    }
+}
+
+.right-pane {
+    flex: 1.5;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+    }
+
+    .light-mode & {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+
+    .dark-mode & {
+        background: #1f2937;
+        border-color: #374151;
+    }
+}
+
+.form-title {
+    margin-bottom: 0.5rem;
+}
+
+.form-desc {
+    margin-bottom: 0.5rem;
+    /* Reduced to make room for helper text */
+
+    .light-mode & {
+        color: #4a5568;
+    }
+
+    .dark-mode & {
+        color: #9ca3af;
+    }
+}
+
+.required-helper-text {
+    margin-bottom: 1.5rem;
+    font-style: italic;
+
+    .light-mode & {
+        color: #718096;
+    }
+
+    .dark-mode & {
+        color: #6b7280;
+    }
+}
+
+.required-asterisk {
+    color: #e53e3e;
+    /* Standard error red */
+    font-weight: bold;
+}
+
+.form-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    flex: 1;
+}
+
+.dynamic-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    label {
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+
+        .light-mode & {
+            color: #4a5568;
+        }
+
+        .dark-mode & {
+            color: #d1d5db;
+        }
+    }
+}
+
+.modern-input {
+    width: 100%;
+    --borderRadiusMedium: 8px;
+    /* Fluent UI border radius override */
+    transition: all 0.2s ease;
+
+    .light-mode & {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .dark-mode & {
+        /* Override Fluent internal variables for a sleek dark input */
+        --colorNeutralBackground1: rgba(31, 41, 55, 0.6);
+        --colorNeutralStroke1: rgba(255, 255, 255, 0.15);
+        --colorNeutralStrokeAccessible: rgba(255, 255, 255, 0.3);
+        --colorNeutralForeground1: #f3f4f6;
+    }
+}
+
+.generate-btn {
+    margin-top: 2.5rem;
+    width: 100%;
+    padding: 1.25rem 1rem !important;
+    /* Force override FluentUI */
+    border-radius: 10px !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
+
+    .light-mode & {
+        background: linear-gradient(135deg, #0f52ba 0%, #1e3a8a 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(15, 82, 186, 0.3) !important;
+    }
+
+    .dark-mode & {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4) !important;
+    }
+
+    &:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        filter: brightness(1.15) !important;
+    }
+
+    &:active {
+        transform: translateY(1px) !important;
+    }
+}
+
+.preview-header {
+    border-bottom: 2px solid;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+
+    .light-mode & {
+        border-color: #e2e8f0;
+        color: #2b6cb0;
+    }
+
+    .dark-mode & {
+        border-color: #374151;
+        color: #60a5fa;
+    }
+}
+
+.preview-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.raw-document-text {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding: 2.5rem;
+    border-radius: 8px;
+    white-space: pre-wrap;
+
+    .light-mode & {
+        color: #1a202c;
+        background: #fdfdfd;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.02) inset;
+        border: 1px solid #edf2f7;
+    }
+
+    .dark-mode & {
+        color: #d1d5db;
+        /* Softer white for dark mode document */
+        background: #111827;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3) inset;
+        border: 1px solid #374151;
+    }
+
+    .preview-paragraph {
+        margin-bottom: 0.5rem;
+        /* Tighter gap since we handle spacer divs dynamically */
+        text-align: justify;
+    }
+}
+
+.affidavit-final-page {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f7fafc;
+    min-height: 100vh;
+}
+
+.split-header {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.final-document-container {
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    width: 100%;
+    max-width: 850px;
+    padding: 4rem;
+    margin-bottom: 4rem;
+}
+
+.printable-document {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.1rem;
+    /* Match preview exact size */
+    line-height: 1.6;
+    /* Match preview line height */
+    color: #000;
+    white-space: pre-wrap;
+    /* Crucial for keeping spacing exact */
+
+    .preview-paragraph {
+        margin-bottom: 0.5rem;
+        text-align: justify;
+    }
+
+    .paragraph-spacer {
+        height: 0.75rem;
+        /* Match the empty div height from preview */
+    }
+}
+
+.final-value {
+    display: inline;
+    font-weight: 600;
+}
