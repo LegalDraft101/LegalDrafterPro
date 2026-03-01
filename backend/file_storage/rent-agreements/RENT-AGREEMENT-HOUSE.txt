@@ -16,21 +16,21 @@ NOW THIS AGREEMENT WITNESSETH AS FOLLOWS:
 
 1. TERM OF TENANCY: The tenancy shall commence from ____ and shall remain valid until ____, unless terminated earlier by either party as per the terms of this agreement.
 
-2. MONTHLY RENT: The Tenant shall pay a monthly rent of Rs. ____ (Rupees ______ only) to the Landlord.
+2. MONTHLY RENT: The Tenant shall pay a monthly rent of Rs. ____ to the Landlord. The rent shall be payable via ____.
 
-3. SECURITY DEPOSIT: The Tenant has paid a sum of Rs. ____ (Rupees ______ only) as security deposit to the Landlord. This deposit shall be refundable without interest upon vacating the premises, after deducting any outstanding dues or damages.
+3. SECURITY DEPOSIT: The Tenant has paid a sum of Rs. ____ as security deposit to the Landlord. {{CLAUSE:depositClause}}
 
 4. UTILITY CHARGES: The Tenant shall bear and pay all charges for electricity, water, gas, and any other utility services consumed during the tenancy period.
 
-5. MAINTENANCE OF PROPERTY: The Tenant shall maintain the house, garden, compound, and all fixtures in good condition. Structural repairs and major maintenance shall be the Landlord's responsibility. Any damage due to Tenant's negligence shall be repaired at Tenant's cost.
+5. MAINTENANCE OF PROPERTY: {{CLAUSE:maintenanceClause}}
 
-6. ALTERATIONS: The Tenant shall not make any structural changes, additions, or alterations to the property without prior written consent of the Landlord.
+6. ALTERATIONS: {{CLAUSE:alterationsClause}}
 
-7. SUB-LETTING: The Tenant shall not sub-let, assign, or transfer the tenancy or any part thereof to any third party without prior written consent of the Landlord.
+7. SUB-LETTING: {{CLAUSE:subletClause}}
 
 8. PURPOSE: The premises shall be used solely for residential purposes. The Tenant shall not carry on any business, trade, or commercial activity from the premises.
 
-9. TERMINATION: Either party may terminate this agreement by giving ____ month(s) written notice to the other party. In case of breach, the Landlord may terminate immediately.
+9. TERMINATION: Either party may terminate this agreement by giving ____ month(s) written notice to the other party. {{CLAUSE:terminationType}}
 
 10. RETURN OF POSSESSION: Upon expiry or termination, the Tenant shall vacate the house peacefully and return vacant possession to the Landlord in the same condition as received, subject to normal wear and tear.
 
@@ -40,10 +40,10 @@ IN WITNESS WHEREOF, the parties have set their hands on this agreement on the da
 
 
 LANDLORD                                    TENANT
-Signature: _______________                  Signature: _______________
-Name: _______________                       Name: _______________
-Date: _______________                       Date: _______________
+Signature: ...............                  Signature: ...............
+Name: ...............                       Name: ...............
+Date: ...............                       Date: ...............
 
 WITNESS 1                                   WITNESS 2
-Signature: _______________                  Signature: _______________
-Name: _______________                       Name: _______________
+Signature: ...............                  Signature: ...............
+Name: ...............                       Name: ...............

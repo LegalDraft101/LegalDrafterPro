@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import {
-    Title1, Title3, Button, Text, Spinner, Input, Textarea, Field
+    Title1, Title3, Button, Text, Spinner, Input, Textarea, Field,
+    Select, Checkbox,
+    Dialog, DialogSurface, DialogBody, DialogTitle, DialogContent, DialogActions
 } from '@fluentui/react-components';
-import { DocumentArrowDownRegular, EditRegular } from '@fluentui/react-icons';
+import {
+    DocumentArrowDownRegular, EditRegular, ArrowLeftRegular,
+    SaveRegular, DocumentRegular, DeleteRegular
+} from '@fluentui/react-icons';
 import { fetchRentAgreementFormatById, saveRentAgreementPdf } from '../../services/apiClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthModal } from '../../components/features/AuthModal';
+import { useDraft } from '../../hooks/useDraft';
 import html2pdf from 'html2pdf.js';
 import '../AffidavitForm/AffidavitForm.scss';
+
+const CLAUSE_TYPES = new Set(['clause-select', 'clause-checkbox']);
 
 function RentAgreementForm() {
     const { formatId } = useParams();
@@ -16,6 +24,7 @@ function RentAgreementForm() {
     const documentRef = useRef();
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
+    const { saveDraft, loadDraft, deleteDraft, hasDraft } = useDraft(user, 'rent-agreement', formatId);
 
     const [formatData, setFormatData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,18 +32,85 @@ function RentAgreementForm() {
     const [formErrors, setFormErrors] = useState({});
     const [isFinalView, setIsFinalView] = useState(false);
 
+    const [initialFormData, setInitialFormData] = useState({});
+    const [showDraftDialog, setShowDraftDialog] = useState(false);
+    const [draftMeta, setDraftMeta] = useState(null);
+    const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+    const [pendingNavigation, setPendingNavigation] = useState(null);
+    const [draftHandled, setDraftHandled] = useState(false);
+    const [navigationConfirmed, setNavigationConfirmed] = useState(false);
+
+    const hasUnsavedChanges = useCallback(() => {
+        if (!formatData || isFinalView) return false;
+        return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    }, [formData, initialFormData, formatData, isFinalView]);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        if (navigationConfirmed) return false;
+        if (isFinalView) return false;
+        if (currentLocation.pathname === nextLocation.pathname) return false;
+        return hasUnsavedChanges();
+    });
+
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            if (user) {
+                setPendingNavigation(blocker);
+                setShowLeaveDialog(true);
+            } else {
+                blocker.proceed();
+            }
+        }
+    }, [blocker.state, blocker, user]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasUnsavedChanges()) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasUnsavedChanges]);
+
+    const buildInitialData = (fields) => {
+        const data = {};
+        fields.forEach(f => {
+            if (f.type === 'clause-checkbox') {
+                data[f.name] = true;
+            } else if (f.type === 'clause-select') {
+                data[f.name] = f.options?.[0]?.value || '';
+            } else {
+                data[f.name] = '';
+            }
+        });
+        return data;
+    };
+
     useEffect(() => {
         const fetchDetails = async () => {
             try {
                 const response = await fetchRentAgreementFormatById(formatId);
                 if (response.success) {
                     setFormatData(response.data);
+                    const freshData = buildInitialData(response.data.fields);
+                    setInitialFormData(freshData);
 
-                    const initialData = {};
-                    response.data.fields.forEach(f => {
-                        initialData[f.name] = '';
-                    });
-                    setFormData(initialData);
+                    if (user && hasDraft()) {
+                        const draft = loadDraft();
+                        if (draft) {
+                            setDraftMeta(draft);
+                            setShowDraftDialog(true);
+                            setFormData(freshData);
+                        } else {
+                            setFormData(freshData);
+                            setDraftHandled(true);
+                        }
+                    } else {
+                        setFormData(freshData);
+                        setDraftHandled(true);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch format details", error);
@@ -47,6 +123,54 @@ function RentAgreementForm() {
             fetchDetails();
         }
     }, [formatId]);
+
+    const handleRestoreDraft = () => {
+        if (draftMeta?.formData) {
+            const merged = { ...buildInitialData(formatData.fields), ...draftMeta.formData };
+            setFormData(merged);
+            setInitialFormData(merged);
+        }
+        setShowDraftDialog(false);
+        setDraftHandled(true);
+    };
+
+    const handleStartNew = () => {
+        deleteDraft();
+        const freshData = buildInitialData(formatData.fields);
+        setFormData(freshData);
+        setInitialFormData(freshData);
+        setShowDraftDialog(false);
+        setDraftHandled(true);
+    };
+
+    const handleLeaveSaveDraft = () => {
+        saveDraft(formData);
+        setShowLeaveDialog(false);
+        setNavigationConfirmed(true);
+        setTimeout(() => pendingNavigation?.proceed(), 0);
+    };
+
+    const handleLeaveDiscard = () => {
+        deleteDraft();
+        setShowLeaveDialog(false);
+        setNavigationConfirmed(true);
+        setTimeout(() => pendingNavigation?.proceed(), 0);
+    };
+
+    const handleLeaveCancel = () => {
+        setShowLeaveDialog(false);
+        pendingNavigation?.reset();
+        setPendingNavigation(null);
+    };
+
+    const handleBack = () => {
+        if (hasUnsavedChanges() && user) {
+            setPendingNavigation({ proceed: () => navigate(-1), reset: () => {} });
+            setShowLeaveDialog(true);
+        } else {
+            navigate(-1);
+        }
+    };
 
     const handleInputChange = (e, data) => {
         const { name } = e.target;
@@ -71,6 +195,8 @@ function RentAgreementForm() {
         let isValid = true;
 
         formatData.fields.forEach(field => {
+            if (CLAUSE_TYPES.has(field.type)) return;
+
             const val = formData[field.name];
 
             if (!val || val.toString().trim() === '') {
@@ -100,18 +226,44 @@ function RentAgreementForm() {
             return;
         }
         if (validateForm()) {
+            deleteDraft();
             setIsFinalView(true);
         } else {
             console.warn("Form validation failed", formErrors);
         }
     };
 
+    const resolveClauseMarkers = (content) => {
+        if (!formatData) return content;
+
+        return content.replace(/\{\{CLAUSE:(\w+)\}\}/g, (match, fieldName) => {
+            const field = formatData.fields.find(f => f.name === fieldName);
+            if (!field) return '';
+
+            if (field.type === 'clause-checkbox') {
+                return formData[fieldName] ? (field.clauseText || '') : '';
+            }
+
+            if (field.type === 'clause-select') {
+                const selectedValue = formData[fieldName];
+                const selectedOption = (field.options || []).find(o => o.value === selectedValue);
+                return selectedOption?.clauseText || field.options?.[0]?.clauseText || '';
+            }
+
+            return match;
+        });
+    };
+
+    const blankFields = formatData?.fields?.filter(f => !CLAUSE_TYPES.has(f.type)) || [];
+
     const getLivePreviewContent = () => {
         if (!formatData || !formatData.content) return null;
 
         const blankRegex = /(_{2,}(?:\/_{2,})*)/g;
 
-        const cleanContent = formatData.content
+        let processedContent = resolveClauseMarkers(formatData.content);
+
+        const cleanContent = processedContent
             .replace(/[ \t]+/g, ' ')
             .replace(/\n\s*\n\s*\n+/g, '\n\n');
 
@@ -120,7 +272,7 @@ function RentAgreementForm() {
         let globalBlankIndex = 0;
 
         return paragraphs.map((paragraph, pIdx) => {
-            if (!paragraph) {
+            if (!paragraph.trim()) {
                 return <div key={pIdx} className="paragraph-spacer" style={{ height: '0.75rem' }} />;
             }
 
@@ -130,7 +282,7 @@ function RentAgreementForm() {
                 <p key={pIdx} className="preview-paragraph">
                     {parts.map((part, i) => {
                         if (i % 2 === 1) {
-                            const field = formatData.fields[globalBlankIndex];
+                            const field = blankFields[globalBlankIndex];
                             globalBlankIndex++;
 
                             if (field && formData[field.name]) {
@@ -172,6 +324,92 @@ function RentAgreementForm() {
         } catch (error) {
             console.error("Failed to save PDF to backend:", error);
         }
+    };
+
+    const renderField = (field) => {
+        if (field.type === 'clause-select') {
+            return (
+                <Field key={field.name} label={field.label} className="dynamic-field">
+                    <Select
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        className="modern-input"
+                        onChange={(e) => {
+                            setFormData(prev => ({ ...prev, [field.name]: e.target.value }));
+                        }}
+                    >
+                        {(field.options || []).map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </Select>
+                </Field>
+            );
+        }
+
+        if (field.type === 'clause-checkbox') {
+            return (
+                <div key={field.name} className="dynamic-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
+                    <Checkbox
+                        checked={!!formData[field.name]}
+                        onChange={(e, data) => {
+                            setFormData(prev => ({ ...prev, [field.name]: data.checked }));
+                        }}
+                        label={field.label}
+                    />
+                </div>
+            );
+        }
+
+        return (
+            <Field
+                key={field.name}
+                label={field.label}
+                required
+                className="dynamic-field"
+                validationMessage={formErrors[field.name]}
+                validationState={formErrors[field.name] ? "error" : "none"}
+            >
+                {field.type === 'select' ? (
+                    <Select
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        className="modern-input"
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData(prev => ({ ...prev, [field.name]: val }));
+                            if (formErrors[field.name]) {
+                                setFormErrors(prev => { const n = { ...prev }; delete n[field.name]; return n; });
+                            }
+                        }}
+                    >
+                        <option value="">Select {field.label}...</option>
+                        {(field.options || []).map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </Select>
+                ) : field.type === 'textarea' ? (
+                    <Textarea
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        onChange={handleInputChange}
+                        placeholder={`Enter ${field.label}`}
+                        resize="vertical"
+                        className="modern-input"
+                        appearance={formErrors[field.name] ? 'underline' : 'outline'}
+                    />
+                ) : (
+                    <Input
+                        name={field.name}
+                        type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'}
+                        value={formData[field.name] || ''}
+                        onChange={handleInputChange}
+                        placeholder={`Enter ${field.label}`}
+                        className="modern-input"
+                        appearance={formErrors[field.name] ? 'underline' : 'outline'}
+                    />
+                )}
+            </Field>
+        );
     };
 
     if (loading) {
@@ -222,6 +460,27 @@ function RentAgreementForm() {
 
     return (
         <div className="affidavit-form-page">
+            <div className="form-top-bar">
+                <Button
+                    appearance="subtle"
+                    icon={<ArrowLeftRegular />}
+                    onClick={handleBack}
+                    className="back-btn"
+                >
+                    Back
+                </Button>
+                {user && hasUnsavedChanges() && (
+                    <Button
+                        appearance="subtle"
+                        icon={<SaveRegular />}
+                        onClick={() => { saveDraft(formData); setInitialFormData(formData); }}
+                        className="save-draft-btn"
+                    >
+                        Save Draft
+                    </Button>
+                )}
+            </div>
+
             <div className="split-layout">
                 <div className="left-pane glass-pane">
                     <Title1 as="h2" className="form-title">{formatData.title}</Title1>
@@ -232,38 +491,25 @@ function RentAgreementForm() {
                     </Text>
 
                     <div className="form-fields-container">
-                        {formatData.fields.map((field) => (
-                            <Field
-                                key={field.name}
-                                label={field.label}
-                                required
-                                className="dynamic-field"
-                                validationMessage={formErrors[field.name]}
-                                validationState={formErrors[field.name] ? "error" : "none"}
-                            >
-                                {field.type === 'textarea' ? (
-                                    <Textarea
-                                        name={field.name}
-                                        value={formData[field.name] || ''}
-                                        onChange={handleInputChange}
-                                        placeholder={`Enter ${field.label}`}
-                                        resize="vertical"
-                                        className="modern-input"
-                                        appearance={formErrors[field.name] ? 'underline' : 'outline'}
-                                    />
-                                ) : (
-                                    <Input
-                                        name={field.name}
-                                        type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'}
-                                        value={formData[field.name] || ''}
-                                        onChange={handleInputChange}
-                                        placeholder={`Enter ${field.label}`}
-                                        className="modern-input"
-                                        appearance={formErrors[field.name] ? 'underline' : 'outline'}
-                                    />
-                                )}
-                            </Field>
-                        ))}
+                        {formatData.fields.map((field, idx) => {
+                            const isClause = CLAUSE_TYPES.has(field.type);
+                            const prevField = idx > 0 ? formatData.fields[idx - 1] : null;
+                            const showClauseHeader = isClause && (!prevField || !CLAUSE_TYPES.has(prevField.type));
+
+                            return (
+                                <React.Fragment key={field.name}>
+                                    {showClauseHeader && (
+                                        <div className="clause-section-header">
+                                            <Title3 as="h3">Customize Clauses</Title3>
+                                            <Text size={200} style={{ color: 'var(--colorNeutralForeground3)' }}>
+                                                Select your preferred clause options below. Changes reflect in the live preview instantly.
+                                            </Text>
+                                        </div>
+                                    )}
+                                    {renderField(field)}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
 
                     <Button
@@ -285,6 +531,53 @@ function RentAgreementForm() {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={showDraftDialog} modalType="alert">
+                <DialogSurface>
+                    <DialogBody>
+                        <DialogTitle>Draft Found</DialogTitle>
+                        <DialogContent>
+                            <Text>
+                                You have a saved draft from{' '}
+                                {draftMeta?.savedAt ? new Date(draftMeta.savedAt).toLocaleString() : 'earlier'}.
+                                Would you like to continue from where you left off?
+                            </Text>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button appearance="secondary" icon={<DeleteRegular />} onClick={handleStartNew}>
+                                Start New
+                            </Button>
+                            <Button appearance="primary" icon={<DocumentRegular />} onClick={handleRestoreDraft}>
+                                Restore Draft
+                            </Button>
+                        </DialogActions>
+                    </DialogBody>
+                </DialogSurface>
+            </Dialog>
+
+            <Dialog open={showLeaveDialog} modalType="alert">
+                <DialogSurface>
+                    <DialogBody>
+                        <DialogTitle>Unsaved Changes</DialogTitle>
+                        <DialogContent>
+                            <Text>
+                                You have unsaved changes. Would you like to save them as a draft before leaving?
+                            </Text>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button appearance="secondary" onClick={handleLeaveDiscard}>
+                                Discard
+                            </Button>
+                            <Button appearance="outline" onClick={handleLeaveCancel}>
+                                Cancel
+                            </Button>
+                            <Button appearance="primary" icon={<SaveRegular />} onClick={handleLeaveSaveDraft}>
+                                Save Draft
+                            </Button>
+                        </DialogActions>
+                    </DialogBody>
+                </DialogSurface>
+            </Dialog>
         </div>
     );
 }

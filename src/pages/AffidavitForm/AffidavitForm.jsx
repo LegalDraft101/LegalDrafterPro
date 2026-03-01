@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import {
-    Title1, Title3, Button, Text, Spinner, Input, Textarea, Field
+    Title1, Button, Text, Spinner, Input, Textarea, Field,
+    Dialog, DialogSurface, DialogBody, DialogTitle, DialogContent, DialogActions
 } from '@fluentui/react-components';
-import { DocumentArrowDownRegular, EditRegular } from '@fluentui/react-icons';
+import {
+    DocumentArrowDownRegular, EditRegular, ArrowLeftRegular,
+    SaveRegular, DocumentRegular, DeleteRegular
+} from '@fluentui/react-icons';
 import { fetchAffidavitFormatById, saveAffidavitPdf } from '../../services/apiClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthModal } from '../../components/features/AuthModal';
+import { useDraft } from '../../hooks/useDraft';
 import html2pdf from 'html2pdf.js';
 import './AffidavitForm.scss';
 
@@ -16,14 +21,55 @@ function AffidavitForm() {
     const documentRef = useRef();
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
+    const { saveDraft, loadDraft, deleteDraft, hasDraft } = useDraft(user, 'affidavit', formatId);
 
     const [formatData, setFormatData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({});
     const [formErrors, setFormErrors] = useState({});
-
-    // NEW: state indicating whether the final document is currently generated
     const [isFinalView, setIsFinalView] = useState(false);
+
+    const [initialFormData, setInitialFormData] = useState({});
+    const [showDraftDialog, setShowDraftDialog] = useState(false);
+    const [draftMeta, setDraftMeta] = useState(null);
+    const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+    const [pendingNavigation, setPendingNavigation] = useState(null);
+    const [draftHandled, setDraftHandled] = useState(false);
+    const [navigationConfirmed, setNavigationConfirmed] = useState(false);
+
+    const hasUnsavedChanges = useCallback(() => {
+        if (!formatData || isFinalView) return false;
+        return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    }, [formData, initialFormData, formatData, isFinalView]);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        if (navigationConfirmed) return false;
+        if (isFinalView) return false;
+        if (currentLocation.pathname === nextLocation.pathname) return false;
+        return hasUnsavedChanges();
+    });
+
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            if (user) {
+                setPendingNavigation(blocker);
+                setShowLeaveDialog(true);
+            } else {
+                blocker.proceed();
+            }
+        }
+    }, [blocker.state, blocker, user]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasUnsavedChanges()) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasUnsavedChanges]);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -32,12 +78,26 @@ function AffidavitForm() {
                 if (response.success) {
                     setFormatData(response.data);
 
-                    // Initialize empty form state based on the backend schema fields
-                    const initialData = {};
+                    const freshData = {};
                     response.data.fields.forEach(f => {
-                        initialData[f.name] = '';
+                        freshData[f.name] = '';
                     });
-                    setFormData(initialData);
+                    setInitialFormData(freshData);
+
+                    if (user && hasDraft()) {
+                        const draft = loadDraft();
+                        if (draft) {
+                            setDraftMeta(draft);
+                            setShowDraftDialog(true);
+                            setFormData(freshData);
+                        } else {
+                            setFormData(freshData);
+                            setDraftHandled(true);
+                        }
+                    } else {
+                        setFormData(freshData);
+                        setDraftHandled(true);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch format details", error);
@@ -51,6 +111,59 @@ function AffidavitForm() {
         }
     }, [formatId]);
 
+    const handleRestoreDraft = () => {
+        if (draftMeta?.formData && formatData) {
+            const freshData = {};
+            formatData.fields.forEach(f => { freshData[f.name] = ''; });
+            const merged = { ...freshData, ...draftMeta.formData };
+            setFormData(merged);
+            setInitialFormData(merged);
+        }
+        setShowDraftDialog(false);
+        setDraftHandled(true);
+    };
+
+    const handleStartNew = () => {
+        deleteDraft();
+        const freshData = {};
+        if (formatData) {
+            formatData.fields.forEach(f => { freshData[f.name] = ''; });
+        }
+        setFormData(freshData);
+        setInitialFormData(freshData);
+        setShowDraftDialog(false);
+        setDraftHandled(true);
+    };
+
+    const handleLeaveSaveDraft = () => {
+        saveDraft(formData);
+        setShowLeaveDialog(false);
+        setNavigationConfirmed(true);
+        setTimeout(() => pendingNavigation?.proceed(), 0);
+    };
+
+    const handleLeaveDiscard = () => {
+        deleteDraft();
+        setShowLeaveDialog(false);
+        setNavigationConfirmed(true);
+        setTimeout(() => pendingNavigation?.proceed(), 0);
+    };
+
+    const handleLeaveCancel = () => {
+        setShowLeaveDialog(false);
+        pendingNavigation?.reset();
+        setPendingNavigation(null);
+    };
+
+    const handleBack = () => {
+        if (hasUnsavedChanges() && user) {
+            setPendingNavigation({ proceed: () => navigate(-1), reset: () => {} });
+            setShowLeaveDialog(true);
+        } else {
+            navigate(-1);
+        }
+    };
+
     const handleInputChange = (e, data) => {
         const { name } = e.target;
         const value = data ? data.value : e.target.value;
@@ -60,7 +173,6 @@ function AffidavitForm() {
             [name]: value
         }));
 
-        // Clear error when user types
         if (formErrors[name]) {
             setFormErrors(prev => {
                 const newErrors = { ...prev };
@@ -104,21 +216,18 @@ function AffidavitForm() {
             return;
         }
         if (validateForm()) {
+            deleteDraft();
             setIsFinalView(true);
         } else {
             console.warn("Form validation failed", formErrors);
         }
     };
 
-    // Replaces the placeholder dashes (e.g., ____ or ___/___/____) with the live text.
-    // Fallback to the dashes if field is empty.
     const getLivePreviewContent = () => {
         if (!formatData || !formatData.content) return null;
 
         const blankRegex = /(_{2,}(?:\/_{2,})*)/g;
 
-        // 1. Clean multi-spaces and tabs into single spaces
-        // 2. Clean multi-line breaks (3 or more \n) into exactly 2 \n (one blank line between paragraphs)
         const cleanContent = formatData.content
             .replace(/[ \t]+/g, ' ')
             .replace(/\n\s*\n\s*\n+/g, '\n\n');
@@ -128,9 +237,7 @@ function AffidavitForm() {
         let globalBlankIndex = 0;
 
         return paragraphs.map((paragraph, pIdx) => {
-            // Drop completely empty strings that aren't intended breaks, but keep intended spacing
             if (!paragraph) {
-                // only insert a minimal visual break if it's an empty line between text
                 return <div key={pIdx} className="paragraph-spacer" style={{ height: '0.75rem' }} />;
             }
 
@@ -140,11 +247,9 @@ function AffidavitForm() {
                 <p key={pIdx} className="preview-paragraph">
                     {parts.map((part, i) => {
                         if (i % 2 === 1) {
-                            // This part is a dashed blank
                             const field = formatData.fields[globalBlankIndex];
                             globalBlankIndex++;
 
-                            // If we have a matching field definition and the user filled it
                             if (field && formData[field.name]) {
                                 return (
                                     <span key={i} className={isFinalView ? "final-value" : "live-value"} title={!isFinalView ? `Filled from: ${field.label}` : ""}>
@@ -152,10 +257,8 @@ function AffidavitForm() {
                                     </span>
                                 );
                             }
-                            // Otherwise, just show the dashes
                             return <span key={i} className="empty-blank"> {part} </span>;
                         }
-                        // Normal text Document Content
                         return <span key={i}>{part}</span>;
                     })}
                 </p>
@@ -175,10 +278,8 @@ function AffidavitForm() {
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
-        // 1. Generate and save locally
         html2pdf().set(opt).from(element).save();
 
-        // 2. Generate Blob and send to backend
         try {
             const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
             const response = await saveAffidavitPdf(pdfBlob, filename);
@@ -206,7 +307,6 @@ function AffidavitForm() {
         );
     }
 
-    // FINAL DOCUMENT VIEW
     if (isFinalView) {
         return (
             <div className="affidavit-final-page">
@@ -237,11 +337,30 @@ function AffidavitForm() {
         );
     }
 
-    // SPLIT EDITOR VIEW
     return (
         <div className="affidavit-form-page">
+            <div className="form-top-bar">
+                <Button
+                    appearance="subtle"
+                    icon={<ArrowLeftRegular />}
+                    onClick={handleBack}
+                    className="back-btn"
+                >
+                    Back
+                </Button>
+                {user && hasUnsavedChanges() && (
+                    <Button
+                        appearance="subtle"
+                        icon={<SaveRegular />}
+                        onClick={() => { saveDraft(formData); setInitialFormData(formData); }}
+                        className="save-draft-btn"
+                    >
+                        Save Draft
+                    </Button>
+                )}
+            </div>
+
             <div className="split-layout">
-                {/* LEFT PANE: Dynamic Form */}
                 <div className="left-pane glass-pane">
                     <Title1 as="h2" className="form-title">{formatData.title}</Title1>
                     <Text className="form-desc">{formatData.description}</Text>
@@ -295,7 +414,6 @@ function AffidavitForm() {
                     </Button>
                 </div>
 
-                {/* RIGHT PANE: Live Preview */}
                 <div className="right-pane glass-pane preview-pane">
                     <Text weight="semibold" size={500} className="preview-header">Live Preview</Text>
                     <div className="preview-content">
@@ -305,6 +423,53 @@ function AffidavitForm() {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={showDraftDialog} modalType="alert">
+                <DialogSurface>
+                    <DialogBody>
+                        <DialogTitle>Draft Found</DialogTitle>
+                        <DialogContent>
+                            <Text>
+                                You have a saved draft from{' '}
+                                {draftMeta?.savedAt ? new Date(draftMeta.savedAt).toLocaleString() : 'earlier'}.
+                                Would you like to continue from where you left off?
+                            </Text>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button appearance="secondary" icon={<DeleteRegular />} onClick={handleStartNew}>
+                                Start New
+                            </Button>
+                            <Button appearance="primary" icon={<DocumentRegular />} onClick={handleRestoreDraft}>
+                                Restore Draft
+                            </Button>
+                        </DialogActions>
+                    </DialogBody>
+                </DialogSurface>
+            </Dialog>
+
+            <Dialog open={showLeaveDialog} modalType="alert">
+                <DialogSurface>
+                    <DialogBody>
+                        <DialogTitle>Unsaved Changes</DialogTitle>
+                        <DialogContent>
+                            <Text>
+                                You have unsaved changes. Would you like to save them as a draft before leaving?
+                            </Text>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button appearance="secondary" onClick={handleLeaveDiscard}>
+                                Discard
+                            </Button>
+                            <Button appearance="outline" onClick={handleLeaveCancel}>
+                                Cancel
+                            </Button>
+                            <Button appearance="primary" icon={<SaveRegular />} onClick={handleLeaveSaveDraft}>
+                                Save Draft
+                            </Button>
+                        </DialogActions>
+                    </DialogBody>
+                </DialogSurface>
+            </Dialog>
         </div>
     );
 }

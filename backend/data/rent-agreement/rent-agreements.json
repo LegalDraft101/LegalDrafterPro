@@ -1,27 +1,177 @@
 [
     {
         "id": "1",
-        "title": "Flat Rent Agreement",
-        "description": "Standard rent agreement for apartments and flats with comprehensive terms and conditions.",
+        "title": "Flat Lease Agreement",
+        "description": "Comprehensive flat lease agreement with property schedules, covenants, and legal clauses.",
         "category": "Residential",
         "file": "file_storage/rent-agreements/RENT-AGREEMENT-FLAT.txt",
         "fields": [
-            { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
-            { "name": "landlordParentName", "label": "Landlord Father's/Husband's Name", "type": "text" },
-            { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
-            { "name": "tenantName", "label": "Tenant Full Name", "type": "text" },
-            { "name": "tenantParentName", "label": "Tenant Father's/Husband's Name", "type": "text" },
-            { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
-            { "name": "flatAddress", "label": "Flat/Premises Address", "type": "textarea" },
-            { "name": "flatDetails", "label": "Flat Details (Floor, BHK, Area)", "type": "text" },
-            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "agreementDay", "label": "Agreement Day", "type": "number" },
+            { "name": "agreementMonth", "label": "Agreement Month", "type": "text" },
+            { "name": "agreementYear", "label": "Agreement Year", "type": "number" },
+            { "name": "agreementPlace", "label": "Place of Agreement", "type": "text" },
+            { "name": "ownerName", "label": "Lessor (Owner) Full Name", "type": "text" },
+            { "name": "ownerAge", "label": "Lessor Age", "type": "number" },
+            { "name": "ownerOccupation", "label": "Lessor Occupation", "type": "text" },
+            { "name": "ownerAddress", "label": "Lessor Residential Address", "type": "textarea" },
+            { "name": "ownerPan", "label": "Lessor PAN", "type": "text" },
+            { "name": "tenantName", "label": "Lessee (Tenant) Full Name", "type": "text" },
+            { "name": "tenantAge", "label": "Lessee Age", "type": "number" },
+            { "name": "tenantOccupation", "label": "Lessee Occupation", "type": "text" },
+            { "name": "tenantAddress", "label": "Lessee Residential Address", "type": "textarea" },
+            { "name": "tenantPan", "label": "Lessee PAN", "type": "text" },
+            { "name": "flatNo", "label": "Flat No.", "type": "text" },
+            { "name": "flatAdd", "label": "Flat Address", "type": "textarea" },
+            { "name": "societyName", "label": "Society Name", "type": "text" },
+            { "name": "ctsNo", "label": "CTS No.", "type": "text" },
+            { "name": "city", "label": "City", "type": "text" },
+            { "name": "leaseDuration", "label": "Lease Duration (Years)", "type": "number" },
+            { "name": "startDate", "label": "Lease Start Date", "type": "date" },
+            { "name": "endDate", "label": "Lease End Date", "type": "date" },
+            { "name": "rentAmount", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "rentWords", "label": "Rent in Words", "type": "text" },
             { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
-            { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
-            { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
-            { "name": "rentDueDay", "label": "Rent Due Day of Month", "type": "number" },
-            { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
-            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
-            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+            { "name": "paymentMethod", "label": "Payment Method", "type": "select", "options": [
+                { "value": "Cash", "label": "Cash" },
+                { "value": "Cheque", "label": "Cheque" },
+                { "value": "UPI", "label": "UPI" },
+                { "value": "Bank Transfer", "label": "Bank Transfer" }
+            ]},
+
+            { "name": "depositDeduction", "label": "Security Deposit Deduction Rights", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard Deduction Rights (Rent, Damages, Charges)",
+                    "clauseText": "The security deposit shall be returned on determination of the lease after deduction for damages if any to the property except reasonable wear and tear expected. The Lessor reserves the right to deduct any outstanding amounts related to rent, interest, or other charges owed by the Lessee, as well as any costs incurred for repairing damages inflicted on the demised premises by the Lessee, from the security deposit prior to its refund."
+                },
+                {
+                    "value": "detailed",
+                    "label": "Detailed Deduction List",
+                    "clauseText": "The security deposit shall be returned on determination of the lease. The Lessor reserves the right to deduct from the security deposit: (a) Outstanding rent arrears, (b) Unpaid maintenance charges, (c) Utility bill arrears, (d) Repair costs for damages beyond normal wear and tear, (e) Cleaning and restoration expenses, (f) Late payment interest, (g) Any other charges due under this lease, prior to its refund to the Lessee."
+                },
+                {
+                    "value": "no_deduction",
+                    "label": "No Deductions (Full Refund)",
+                    "clauseText": "The security deposit shall be returned in full without any deductions upon determination of the lease, subject to proper handover of the demised premises in the same condition as received, barring normal wear and tear."
+                }
+            ]},
+            { "name": "alterationsClause", "label": "Structural Alterations Policy", "type": "clause-select", "options": [
+                {
+                    "value": "no_alterations",
+                    "label": "No Alterations Without Written Consent",
+                    "clauseText": "Not to make any structural alterations into or upon the demised premises or make any alterations or addition to the external appearance or any part of the demised premises without the previous consent of the Lessor in writing."
+                },
+                {
+                    "value": "minor_allowed",
+                    "label": "Minor Non-Structural Alterations Allowed",
+                    "clauseText": "Not to make any structural alterations to the demised premises without the previous consent of the Lessor in writing. However, the Lessee may make minor non-structural changes such as painting, installing shelves, curtain rods, and similar fixtures, provided they are removed and the premises restored upon vacating."
+                },
+                {
+                    "value": "strict_prohibition",
+                    "label": "Strict Prohibition (No Changes Allowed)",
+                    "clauseText": "Not to make any alterations, additions, modifications, or changes whatsoever to the demised premises, whether structural or non-structural, including but not limited to painting, nailing, drilling, or any work that affects the walls, floors, ceilings, or any part of the premises, without the prior written consent of the Lessor."
+                }
+            ]},
+            { "name": "subletClause", "label": "Sub-letting / Assignment Policy", "type": "clause-select", "options": [
+                {
+                    "value": "no_sublet",
+                    "label": "No Sub-letting Allowed",
+                    "clauseText": "Not to sub-let, transfer, assign or part with the possession of the demised premises or any part thereof to any person or entity under any circumstances whatsoever."
+                },
+                {
+                    "value": "with_consent",
+                    "label": "Sub-letting With Written Consent",
+                    "clauseText": "Not to sub-let, transfer, assign or part with the possession of the demised premises or any part thereof without the prior written consent of the Lessor, which shall not be unreasonably withheld. Any approved sub-letting shall not relieve the Lessee of obligations under this lease."
+                },
+                {
+                    "value": "partial_allowed",
+                    "label": "Partial Sub-letting Allowed (With Consent)",
+                    "clauseText": "Not to sub-let or assign the entire demised premises without prior written consent of the Lessor. However, the Lessee may sub-let a portion of the premises with the written consent of the Lessor, provided the sub-tenant agrees to abide by all terms of this lease. The Lessee remains fully responsible for all obligations under this lease."
+                }
+            ]},
+            { "name": "maintenanceClause", "label": "Maintenance & Repairs Responsibility", "type": "clause-select", "options": [
+                {
+                    "value": "lessor_structural",
+                    "label": "Lessor Bears Structural, Lessee Bears Minor Repairs",
+                    "clauseText": "To keep the interior, exterior of the demised premises, the drainage thereof and the water pump in good and tenable repair and condition. Structural repairs and major maintenance including roof, walls, plumbing, and electrical wiring shall be the responsibility of the Lessor. The Lessee shall be responsible for day-to-day minor repairs and upkeep of the premises."
+                },
+                {
+                    "value": "lessor_all",
+                    "label": "Lessor Bears All Maintenance",
+                    "clauseText": "To keep the interior, exterior of the demised premises, the drainage thereof and all fixtures in good and tenable repair and condition at the Lessor's own cost and expense. All repairs, maintenance, and upkeep of the premises, whether structural or non-structural, shall be the sole responsibility of the Lessor."
+                },
+                {
+                    "value": "lessee_all",
+                    "label": "Lessee Bears All Maintenance",
+                    "clauseText": "The Lessee shall maintain the demised premises in good and tenable condition at the Lessee's own cost. All repairs, maintenance, and upkeep, including structural and non-structural work, plumbing, electrical, and fixtures, shall be the sole responsibility of the Lessee during the lease period."
+                },
+                {
+                    "value": "shared",
+                    "label": "Shared Responsibility",
+                    "clauseText": "To keep the exterior and structural components of the demised premises in good repair and condition. The Lessee shall maintain the interior, fixtures, and fittings in good condition. Costs for major structural repairs shall be borne by the Lessor, while costs for interior maintenance, minor repairs, and fixture replacements shall be borne by the Lessee."
+                }
+            ]},
+            { "name": "terminationType", "label": "Termination Clause Type", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard Notice Period (Most Common)",
+                    "clauseText": "It is hereby agreed that if the rent or any part thereof payable in respect of the demised premises shall be in arrears for a period of two months or if the Lessee shall omit to perform or observe any covenants or conditions on the Lessee's part herein contained, the Lessor shall provide written notice to the Lessee specifying the default. If the Lessee fails to remedy the default within 30 days of receiving such notice, the Lessor may re-enter upon the demised premises and terminate the lease."
+                },
+                {
+                    "value": "immediate",
+                    "label": "Immediate Termination (No Notice)",
+                    "clauseText": "It is hereby agreed that the Lessor shall have the right to terminate the lease immediately without prior notice in the event of any material default by the Lessee, including but not limited to non-payment of rent for 2 consecutive months, illegal use of the premises, sub-letting without consent, or causing significant damage to the property. Upon such termination, the Lessee must vacate the premises within 7 days."
+                },
+                {
+                    "value": "mutual_agreement",
+                    "label": "Mutual Agreement with Default Clause",
+                    "clauseText": "This lease may be terminated by mutual written agreement of both parties at any time. In case of unilateral termination by the Lessor due to the Lessee's default (including non-payment of rent for two months or breach of any covenant), the Lessor must provide 30 days written notice. If the default is not remedied within the notice period, the Lessor may terminate the lease and re-enter the premises."
+                },
+                {
+                    "value": "escalation",
+                    "label": "Three-Step Escalation Process",
+                    "clauseText": "It is hereby agreed that the Lessor shall have the right to terminate the lease through the following escalation process: (a) First Warning — Written notice to remedy default within 15 days; (b) Second Warning — If not remedied, an additional 15 days to cure the breach with a formal warning of termination; (c) Final Termination — If still not remedied, the Lessor may terminate the lease without further notice and re-enter the premises. The Lessee shall vacate within 7 days of final termination."
+                }
+            ]},
+            { "name": "defaultPenalty", "label": "Default / Penalty Clause", "type": "clause-select", "options": [
+                {
+                    "value": "terminate_and_reclaim",
+                    "label": "Terminate Lease & Reclaim Possession (Standard)",
+                    "clauseText": "If within a period of one month after the issue of the notice specified above, the Lessee does not pay the rent or does not perform or observe the covenant or condition, the Lessor shall have the right to terminate the lease at its sole discretion and reclaim possession of the demised premises as the complete and absolute owner, and thereupon all rights of the Lessee hereunder shall determine."
+                },
+                {
+                    "value": "late_fee",
+                    "label": "Late Fee Penalty",
+                    "clauseText": "If within a period of one month after the issue of the notice, the Lessee does not pay the overdue rent, a late fee penalty of 2% of the monthly rent per month of default shall be imposed, in addition to the overdue rent amount. If the default continues beyond 3 months including penalties, the Lessor shall have the right to terminate the lease and reclaim possession."
+                },
+                {
+                    "value": "interest",
+                    "label": "Interest on Overdue Amount",
+                    "clauseText": "If the Lessee defaults in the payment of rent, interest at the rate of 18% per annum shall be charged on the overdue rent amount from the due date until full payment is received. If the total overdue amount including interest exceeds 3 months rent, the Lessor shall have the right to terminate the lease and reclaim possession."
+                },
+                {
+                    "value": "legal_action",
+                    "label": "Legal Action for Recovery",
+                    "clauseText": "If within a period of one month after the issue of the notice, the Lessee does not pay the rent or remedy the breach, the Lessor shall have the right to initiate legal proceedings for recovery of all dues and possession of the demised premises, in addition to claiming damages for breach of contract. All legal costs incurred shall be borne by the Lessee."
+                }
+            ]},
+
+            { "name": "areaSqMtrs", "label": "Area (Sq. mtrs.)", "type": "number" },
+            { "name": "district", "label": "District", "type": "text" },
+            { "name": "subDivision", "label": "Sub-Division", "type": "text" },
+            { "name": "taluka", "label": "Taluka", "type": "text" },
+            { "name": "corporationLimits", "label": "Corporation Limits", "type": "text" },
+            { "name": "plotNo", "label": "Plot No.", "type": "text" },
+            { "name": "surveyNo", "label": "Survey No.", "type": "text" },
+            { "name": "boundaryEast", "label": "Boundary - East", "type": "text" },
+            { "name": "boundaryWest", "label": "Boundary - West", "type": "text" },
+            { "name": "boundaryNorth", "label": "Boundary - North", "type": "text" },
+            { "name": "boundarySouth", "label": "Boundary - South", "type": "text" },
+            { "name": "furnitureDescription", "label": "Furniture & Fixtures Description", "type": "textarea" },
+            { "name": "witness1Name", "label": "Witness 1 Name", "type": "text" },
+            { "name": "witness1Details", "label": "Witness 1 Details", "type": "textarea" },
+            { "name": "witness2Name", "label": "Witness 2 Name", "type": "text" },
+            { "name": "witness2Details", "label": "Witness 2 Details", "type": "textarea" }
         ]
     },
     {
@@ -31,6 +181,8 @@
         "category": "Residential",
         "file": "file_storage/rent-agreements/RENT-AGREEMENT-HOUSE.txt",
         "fields": [
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" },
             { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
             { "name": "landlordParentName", "label": "Landlord Father's/Husband's Name", "type": "text" },
             { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
@@ -39,13 +191,105 @@
             { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
             { "name": "houseAddress", "label": "House/Property Address", "type": "textarea" },
             { "name": "houseDetails", "label": "House Details (Rooms, Area, Amenities)", "type": "text" },
-            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
-            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
             { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
             { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "paymentMethod", "label": "Payment Method", "type": "select", "options": [
+                { "value": "Cash", "label": "Cash" },
+                { "value": "Cheque", "label": "Cheque" },
+                { "value": "UPI", "label": "UPI" },
+                { "value": "Bank Transfer", "label": "Bank Transfer" }
+            ]},
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+
+            { "name": "depositClause", "label": "Security Deposit Refund Terms", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (Deduct Outstanding Dues & Damages)",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating the premises, after deducting any outstanding rent, utility charges, or repair costs for damages beyond normal wear and tear."
+                },
+                {
+                    "value": "detailed",
+                    "label": "Detailed Deduction List",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating the premises. The Landlord reserves the right to deduct: (a) Outstanding rent arrears, (b) Unpaid utility charges, (c) Repair costs for damages beyond normal wear and tear, (d) Cleaning and restoration expenses, (e) Any other charges due under this agreement, prior to refund."
+                },
+                {
+                    "value": "no_deduction",
+                    "label": "No Deductions (Full Refund)",
+                    "clauseText": "This deposit shall be returned in full without any deductions upon vacating the premises, subject to proper handover of the property in the same condition as received, barring normal wear and tear."
+                }
+            ]},
+            { "name": "maintenanceClause", "label": "Maintenance Responsibility", "type": "clause-select", "options": [
+                {
+                    "value": "shared",
+                    "label": "Shared (Landlord Structural, Tenant Minor)",
+                    "clauseText": "The Tenant shall maintain the house, garden, compound, and all fixtures in good condition. Structural repairs and major maintenance including roof, walls, plumbing, and electrical wiring shall be the Landlord's responsibility. Minor day-to-day repairs and upkeep shall be borne by the Tenant. Any damage due to Tenant's negligence shall be repaired at Tenant's cost."
+                },
+                {
+                    "value": "landlord_all",
+                    "label": "Landlord Bears All Maintenance",
+                    "clauseText": "The Landlord shall be responsible for all maintenance, repairs, and upkeep of the property, including structural and non-structural work, plumbing, electrical, garden maintenance, and all fixtures, at the Landlord's own cost and expense."
+                },
+                {
+                    "value": "tenant_all",
+                    "label": "Tenant Bears All Maintenance",
+                    "clauseText": "The Tenant shall be responsible for all maintenance, repairs, and upkeep of the house, garden, compound, and all fixtures during the tenancy period, at the Tenant's own cost. This includes both structural and non-structural maintenance."
+                }
+            ]},
+            { "name": "alterationsClause", "label": "Alterations Policy", "type": "clause-select", "options": [
+                {
+                    "value": "with_consent",
+                    "label": "No Alterations Without Written Consent",
+                    "clauseText": "The Tenant shall not make any structural changes, additions, or alterations to the property without prior written consent of the Landlord."
+                },
+                {
+                    "value": "minor_allowed",
+                    "label": "Minor Non-Structural Alterations Allowed",
+                    "clauseText": "The Tenant shall not make any structural changes to the property without prior written consent of the Landlord. However, the Tenant may make minor non-structural changes such as painting, installing shelves, curtain rods, and similar fixtures, provided they are removed and the premises restored upon vacating."
+                },
+                {
+                    "value": "strict",
+                    "label": "Strict Prohibition (No Changes Allowed)",
+                    "clauseText": "The Tenant shall not make any alterations, modifications, or changes whatsoever to the property, whether structural or non-structural, including painting, nailing, drilling, or any work that affects the walls, floors, ceilings, or any part of the premises, without prior written consent of the Landlord."
+                }
+            ]},
+            { "name": "subletClause", "label": "Sub-letting Policy", "type": "clause-select", "options": [
+                {
+                    "value": "no_sublet",
+                    "label": "No Sub-letting Allowed",
+                    "clauseText": "The Tenant shall not sub-let, assign, or transfer the tenancy or any part thereof to any third party under any circumstances whatsoever."
+                },
+                {
+                    "value": "with_consent",
+                    "label": "Sub-letting With Written Consent",
+                    "clauseText": "The Tenant shall not sub-let, assign, or transfer the tenancy or any part thereof to any third party without prior written consent of the Landlord, which shall not be unreasonably withheld. Any approved sub-letting shall not relieve the Tenant of obligations under this agreement."
+                },
+                {
+                    "value": "partial",
+                    "label": "Partial Sub-letting Allowed (With Consent)",
+                    "clauseText": "The Tenant shall not sub-let or assign the entire premises without prior written consent of the Landlord. However, the Tenant may sub-let a portion of the premises with the Landlord's written consent, provided the sub-tenant agrees to abide by all terms of this agreement."
+                }
+            ]},
+
             { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
-            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
-            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+
+            { "name": "terminationType", "label": "Termination / Breach Clause", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (30 Days Notice for Breach)",
+                    "clauseText": "In case of breach of any terms by the Tenant, the Landlord shall provide written notice specifying the default. If the Tenant fails to remedy the default within 30 days, the Landlord may terminate the agreement and re-enter the premises."
+                },
+                {
+                    "value": "immediate",
+                    "label": "Immediate Termination on Breach",
+                    "clauseText": "In case of material breach including non-payment of rent for 2 consecutive months, illegal activity, sub-letting without consent, or causing significant damage to the property, the Landlord may terminate this agreement immediately without further notice and require the Tenant to vacate within 7 days."
+                },
+                {
+                    "value": "mutual",
+                    "label": "Mutual Agreement with Default Clause",
+                    "clauseText": "This agreement may also be terminated by mutual written consent of both parties at any time. In case of breach by either party, the aggrieved party must provide 30 days written notice specifying the default and allow reasonable time for remedy before termination."
+                }
+            ]}
         ]
     },
     {
@@ -55,19 +299,96 @@
         "category": "Residential",
         "file": "file_storage/rent-agreements/RENT-AGREEMENT-ROOM.txt",
         "fields": [
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" },
             { "name": "ownerName", "label": "Owner Full Name", "type": "text" },
             { "name": "ownerAddress", "label": "Owner Permanent Address", "type": "textarea" },
             { "name": "tenantName", "label": "Tenant/PG Full Name", "type": "text" },
             { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
             { "name": "propertyAddress", "label": "Property Address", "type": "textarea" },
             { "name": "roomDetails", "label": "Room Details (Room No., Floor, Furnishing)", "type": "text" },
-            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
-            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
             { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
             { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "paymentMethod", "label": "Payment Method", "type": "select", "options": [
+                { "value": "Cash", "label": "Cash" },
+                { "value": "Cheque", "label": "Cheque" },
+                { "value": "UPI", "label": "UPI" },
+                { "value": "Bank Transfer", "label": "Bank Transfer" }
+            ]},
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+
+            { "name": "depositClause", "label": "Security Deposit Refund Terms", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (Deduct Outstanding Dues & Damages)",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating, after deducting any outstanding rent, utility charges, or repair costs for damages beyond normal wear and tear."
+                },
+                {
+                    "value": "detailed",
+                    "label": "Detailed Deduction List",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating. The Owner reserves the right to deduct: (a) Outstanding rent arrears, (b) Unpaid utility charges, (c) Repair costs for damages beyond normal wear and tear, (d) Cleaning expenses, (e) Any other charges due under this agreement, prior to refund."
+                },
+                {
+                    "value": "no_deduction",
+                    "label": "No Deductions (Full Refund)",
+                    "clauseText": "This deposit shall be returned in full without any deductions upon vacating, subject to proper handover of the room in the same condition as received, barring normal wear and tear."
+                }
+            ]},
+            { "name": "visitorPolicy", "label": "Visitor Policy", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (Overnight With Prior Intimation)",
+                    "clauseText": "Overnight visitors are permitted only with prior intimation to the Owner. The Tenant shall be responsible for the conduct of his/her visitors."
+                },
+                {
+                    "value": "strict",
+                    "label": "Strict (No Overnight Visitors)",
+                    "clauseText": "No overnight visitors are permitted. Daytime visitors are allowed between 8 AM and 10 PM only. The Tenant shall inform the Owner before bringing any visitor to the premises and shall be responsible for their conduct at all times."
+                },
+                {
+                    "value": "liberal",
+                    "label": "Liberal (Overnight Guests Allowed)",
+                    "clauseText": "Visitors are permitted at reasonable hours. Overnight guests are allowed for a maximum of 3 consecutive nights with prior intimation to the Owner. Extended stays require the Owner's written consent. The Tenant shall be responsible for the conduct of all visitors."
+                }
+            ]},
+            { "name": "subletClause", "label": "Room Sharing / Sub-letting Policy", "type": "clause-select", "options": [
+                {
+                    "value": "no_sharing",
+                    "label": "No Sharing Without Consent",
+                    "clauseText": "The Tenant shall not sub-let or share the allotted room with any other person without prior written consent of the Owner."
+                },
+                {
+                    "value": "with_consent",
+                    "label": "Sharing Allowed With Written Consent",
+                    "clauseText": "The Tenant may share the allotted room with another person only with the prior written consent of the Owner. The Tenant shall remain fully responsible for the conduct of any co-occupant and for all obligations under this agreement."
+                },
+                {
+                    "value": "strict",
+                    "label": "Strict (Exclusive Use Only)",
+                    "clauseText": "The Tenant shall not sub-let, share, or permit any other person to occupy the allotted room under any circumstances. The room is strictly for the exclusive use of the named Tenant only."
+                }
+            ]},
+
             { "name": "noticePeriodDays", "label": "Notice Period (Days)", "type": "number" },
-            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
-            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+
+            { "name": "terminationType", "label": "Termination / Breach Clause", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (7 Days Notice for Breach)",
+                    "clauseText": "In case of breach of any terms including non-payment of rent or violation of house rules, the Owner may terminate this agreement after providing 7 days written notice to the Tenant."
+                },
+                {
+                    "value": "immediate",
+                    "label": "Immediate Termination on Breach",
+                    "clauseText": "In case of serious breach including non-payment of rent, illegal activity, disturbance to other occupants, or damage to property, the Owner may terminate this agreement immediately and require the Tenant to vacate within 48 hours."
+                },
+                {
+                    "value": "mutual",
+                    "label": "Mutual Agreement with Default Clause",
+                    "clauseText": "This agreement may also be terminated by mutual written consent of both parties at any time. In case of breach, the aggrieved party must provide 7 days written notice specifying the default and allow reasonable time for remedy before termination."
+                }
+            ]}
         ]
     },
     {
@@ -77,6 +398,8 @@
         "category": "Commercial",
         "file": "file_storage/rent-agreements/RENT-AGREEMENT-SHOP.txt",
         "fields": [
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" },
             { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
             { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
             { "name": "tenantName", "label": "Tenant/Business Name", "type": "text" },
@@ -84,13 +407,105 @@
             { "name": "premisesAddress", "label": "Premises/Shop Address", "type": "textarea" },
             { "name": "premisesDetails", "label": "Premises Details (Shop No., Area, Floor)", "type": "text" },
             { "name": "businessPurpose", "label": "Purpose of Use / Business Activity", "type": "text" },
-            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
-            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
             { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
             { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "monthlyRent", "label": "Rent Amount (Rs.)", "type": "number" },
+            { "name": "rentFrequency", "label": "Rent Frequency", "type": "select", "options": [
+                { "value": "Monthly", "label": "Monthly" },
+                { "value": "Quarterly", "label": "Quarterly" },
+                { "value": "Half-Yearly", "label": "Half-Yearly" },
+                { "value": "Yearly", "label": "Yearly" }
+            ]},
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+
+            { "name": "depositClause", "label": "Security Deposit Refund Terms", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (Deduct Outstanding Dues & Damages)",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating the premises, after deducting any outstanding rent, utility charges, or repair costs for damages beyond normal wear and tear."
+                },
+                {
+                    "value": "detailed",
+                    "label": "Detailed Deduction List",
+                    "clauseText": "This deposit shall be refundable without interest upon vacating the premises. The Landlord reserves the right to deduct: (a) Outstanding rent arrears, (b) Unpaid utility charges, (c) Repair costs for damages beyond normal wear and tear, (d) Cleaning and restoration expenses, (e) Costs of removing unauthorized alterations, (f) Any other charges due under this agreement, prior to refund."
+                },
+                {
+                    "value": "no_deduction",
+                    "label": "No Deductions (Full Refund)",
+                    "clauseText": "This deposit shall be returned in full without any deductions upon vacating the premises, subject to proper handover in the same condition as received, barring normal wear and tear."
+                }
+            ]},
+            { "name": "maintenanceClause", "label": "Maintenance Responsibility", "type": "clause-select", "options": [
+                {
+                    "value": "shared",
+                    "label": "Shared (Landlord Structural, Tenant Day-to-Day)",
+                    "clauseText": "The Tenant shall maintain the premises in good condition for daily use. Structural repairs and major maintenance shall be the Landlord's responsibility. Any damage caused by the Tenant's negligence or business operations shall be repaired at the Tenant's expense."
+                },
+                {
+                    "value": "landlord_all",
+                    "label": "Landlord Bears All Maintenance",
+                    "clauseText": "The Landlord shall be responsible for all maintenance, repairs, and upkeep of the premises, both structural and non-structural, at the Landlord's own cost and expense."
+                },
+                {
+                    "value": "tenant_all",
+                    "label": "Tenant Bears All Maintenance",
+                    "clauseText": "The Tenant shall be responsible for all maintenance, repairs, and upkeep of the premises during the tenancy period, at the Tenant's own cost, including structural and non-structural work, plumbing, electrical, and all fixtures."
+                }
+            ]},
+            { "name": "alterationsClause", "label": "Alterations & Fixtures Policy", "type": "clause-select", "options": [
+                {
+                    "value": "with_consent",
+                    "label": "Alterations With Written Consent Only",
+                    "clauseText": "The Tenant shall not make any structural changes or permanent fixtures without the Landlord's written consent. Any approved alterations shall become the Landlord's property unless otherwise agreed in writing."
+                },
+                {
+                    "value": "minor_allowed",
+                    "label": "Minor Business Modifications Allowed",
+                    "clauseText": "The Tenant may make minor non-structural modifications necessary for business operations, such as installing shelves, display units, and signage brackets, without prior consent. Structural changes and permanent fixtures require the Landlord's written consent. All alterations shall be removed upon vacating unless agreed otherwise."
+                },
+                {
+                    "value": "strict",
+                    "label": "Strict Prohibition (No Changes Allowed)",
+                    "clauseText": "The Tenant shall not make any alterations, additions, or modifications whatsoever to the premises without the prior written consent of the Landlord. Any approved alterations shall become the property of the Landlord and shall not be removed by the Tenant upon vacating."
+                }
+            ]},
+            { "name": "subletClause", "label": "Sub-letting / Assignment Policy", "type": "clause-select", "options": [
+                {
+                    "value": "no_sublet",
+                    "label": "No Sub-letting Allowed",
+                    "clauseText": "The Tenant shall not sub-let, assign, or transfer the tenancy or any part thereof to any third party under any circumstances whatsoever."
+                },
+                {
+                    "value": "with_consent",
+                    "label": "Sub-letting With Written Consent",
+                    "clauseText": "The Tenant shall not sub-let, assign, or transfer the tenancy or any part thereof to any third party without prior written consent of the Landlord, which shall not be unreasonably withheld. Any approved sub-letting shall not relieve the Tenant of obligations under this agreement."
+                },
+                {
+                    "value": "partial",
+                    "label": "Partial Sub-letting Allowed (With Consent)",
+                    "clauseText": "The Tenant shall not sub-let or assign the entire premises without prior written consent of the Landlord. However, the Tenant may sub-let a portion of the premises with the Landlord's written consent, provided the sub-tenant agrees to abide by all terms of this agreement and obtains necessary business licenses."
+                }
+            ]},
+
             { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
-            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
-            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+
+            { "name": "terminationType", "label": "Termination / Breach Clause", "type": "clause-select", "options": [
+                {
+                    "value": "standard",
+                    "label": "Standard (30 Days Notice for Breach)",
+                    "clauseText": "In case of breach of any terms by the Tenant, the Landlord shall provide written notice specifying the default. If the Tenant fails to remedy the default within 30 days, the Landlord may terminate the agreement and re-enter the premises."
+                },
+                {
+                    "value": "immediate",
+                    "label": "Immediate Termination on Breach",
+                    "clauseText": "In case of material breach including non-payment of rent for 2 consecutive periods, illegal activity, unauthorized alterations, or causing significant damage to the property, the Landlord may terminate this agreement immediately without further notice and require the Tenant to vacate within 15 days."
+                },
+                {
+                    "value": "mutual",
+                    "label": "Mutual Agreement with Default Clause",
+                    "clauseText": "This agreement may also be terminated by mutual written consent of both parties at any time. In case of breach by either party, the aggrieved party must provide 30 days written notice specifying the default and allow reasonable time for remedy before termination."
+                }
+            ]}
         ]
     }
 ]
