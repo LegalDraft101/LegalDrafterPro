@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "npm install --include=dev && tsc",
     "start": "node dist/index.js",
     "test": "jest --passWithNoTests"
   },
