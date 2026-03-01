@@ -7,11 +7,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/auth': {
-        target: 'http://localhost:4000',
+        target: 'https://legaldrafterpro-1.onrender.com',
         changeOrigin: true,
       },
       '/api': {
-        target: 'http://localhost:4000',
+        target: 'https://legaldrafterpro-1.onrender.com',
         changeOrigin: true,
       },
     },
