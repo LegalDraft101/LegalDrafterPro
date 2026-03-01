@@ -1,0 +1,19 @@
+{
+  "typeId": "shop",
+  "typeName": "Commercial / Shop Rent Agreement",
+  "fields": [
+    { "id": "landlordName", "name": "landlordName", "label": "Landlord's full name", "type": "text", "required": true, "placeholder": "Owner name" },
+    { "id": "tenantName", "name": "tenantName", "label": "Tenant / Business name", "type": "text", "required": true, "placeholder": "Name of tenant or firm" },
+    { "id": "propertyAddress", "name": "propertyAddress", "label": "Commercial premises address", "type": "textarea", "required": true, "placeholder": "Full address" },
+    { "id": "premisesType", "name": "premisesType", "label": "Type of premises", "type": "select", "required": true, "options": [
+      { "value": "shop", "label": "Shop" },
+      { "value": "office", "label": "Office" },
+      { "value": "warehouse", "label": "Warehouse" },
+      { "value": "other", "label": "Other" }
+    ]},
+    { "id": "monthlyRent", "name": "monthlyRent", "label": "Monthly rent (₹)", "type": "number", "required": true, "placeholder": "Amount" },
+    { "id": "securityDeposit", "name": "securityDeposit", "label": "Security deposit (₹)", "type": "number", "required": true, "placeholder": "Amount" },
+    { "id": "startDate", "name": "startDate", "label": "Agreement start date", "type": "date", "required": true },
+    { "id": "endDate", "name": "endDate", "label": "Agreement end date", "type": "date", "required": true }
+  ]
+}

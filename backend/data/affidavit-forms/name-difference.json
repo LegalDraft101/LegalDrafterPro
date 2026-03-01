@@ -1,0 +1,26 @@
+{
+  "typeId": "name-difference",
+  "typeName": "Affidavit for Name Difference",
+  "fields": [
+    { "id": "deponentName", "name": "deponentName", "label": "Full Name of Deponent", "type": "text", "required": true, "placeholder": "Enter your full name", "section": "Personal Details" },
+    { "id": "age", "name": "age", "label": "Age (in years)", "type": "number", "required": true, "placeholder": "e.g. 25", "section": "Personal Details" },
+    { "id": "relation", "name": "relation", "label": "Son / Daughter of", "type": "select", "required": true, "options": [{ "value": "son", "label": "Son" }, { "value": "daughter", "label": "Daughter" }], "section": "Personal Details" },
+    { "id": "fatherName", "name": "fatherName", "label": "Father's / Parent's Name", "type": "text", "required": true, "placeholder": "Father's or parent's full name", "section": "Personal Details" },
+    { "id": "permanentAddress", "name": "permanentAddress", "label": "Permanent Address", "type": "textarea", "required": true, "placeholder": "Full residential / permanent address", "section": "Personal Details" },
+    { "id": "aadhaarUpload", "name": "aadhaarUpload", "label": "Upload Aadhaar Card (for age verification)", "type": "file", "required": true, "accept": "image/jpeg,image/png,application/pdf", "hint": "Upload a clear photo or scan of your Aadhaar card (JPEG, PNG, or PDF)", "section": "Identity Verification" },
+
+    { "id": "nameInFirstDoc", "name": "nameInFirstDoc", "label": "Name as in First Document", "type": "text", "required": true, "placeholder": "Name as it appears in the first document", "section": "Name Discrepancy Details" },
+    { "id": "firstDocumentName", "name": "firstDocumentName", "label": "First Document Name", "type": "text", "required": true, "placeholder": "e.g. Aadhaar Card, 10th Marksheet", "section": "Name Discrepancy Details" },
+    { "id": "nameInSecondDoc", "name": "nameInSecondDoc", "label": "Name as in Second Document", "type": "text", "required": true, "placeholder": "Name as it appears in the second document", "section": "Name Discrepancy Details" },
+    { "id": "secondDocumentName", "name": "secondDocumentName", "label": "Second Document Name", "type": "text", "required": true, "placeholder": "e.g. PAN Card, Passport", "section": "Name Discrepancy Details" },
+    { "id": "correctName", "name": "correctName", "label": "Correct and Proper Name", "type": "text", "required": true, "placeholder": "The correct name to be used henceforth", "section": "Name Discrepancy Details" },
+
+    { "id": "applicationDate", "name": "applicationDate", "label": "Application Date", "type": "date", "required": true, "section": "Execution & Verification" },
+    { "id": "verificationPlace", "name": "verificationPlace", "label": "Place of Verification", "type": "text", "required": true, "placeholder": "City / Town", "section": "Execution & Verification" },
+    { "id": "verificationDate", "name": "verificationDate", "label": "Verification Date", "type": "date", "required": true, "section": "Execution & Verification" },
+
+    { "id": "advocateName", "name": "advocateName", "label": "Advocate / Notary Public Name", "type": "text", "required": false, "placeholder": "Name of attesting advocate or notary", "section": "Attestation Details (Optional)" },
+    { "id": "enrolmentNo", "name": "enrolmentNo", "label": "Enrolment / Registration No.", "type": "text", "required": false, "placeholder": "Bar Council enrolment number", "section": "Attestation Details (Optional)" },
+    { "id": "advocateAddress", "name": "advocateAddress", "label": "Advocate / Notary Address", "type": "text", "required": false, "placeholder": "Office address", "section": "Attestation Details (Optional)" }
+  ]
+}

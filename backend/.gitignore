@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+data/drafts/submissions/
+data/drafts/documents/
+data/drafts/uploads/
+file_storage/generated_affidavits/*.pdf

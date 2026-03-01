@@ -1,0 +1,244 @@
+[
+    {
+        "id": "1",
+        "title": "General Name Change Affidavit",
+        "description": "Standard format for changing name due to spelling error or personal preference based on the uploaded template.",
+        "category": "Identity & Name Change",
+        "file": "file_storage/affidavits/AFFIDAVIT - NAME DIFFERENCE.docx",
+        "fields": [
+            {
+                "name": "fullName",
+                "label": "Full Name",
+                "type": "text"
+            },
+            {
+                "name": "age",
+                "label": "Age",
+                "type": "number"
+            },
+            {
+                "name": "parentName",
+                "label": "Son/Daughter of",
+                "type": "text"
+            },
+            {
+                "name": "permanentAddress",
+                "label": "Permanent Address",
+                "type": "textarea"
+            },
+            {
+                "name": "nameInFirstDocument",
+                "label": "Name as per First Document",
+                "type": "text"
+            },
+            {
+                "name": "firstDocumentType",
+                "label": "First Document Name",
+                "type": "text"
+            },
+            {
+                "name": "nameInSecondDocument",
+                "label": "Name as per Second Document",
+                "type": "text"
+            },
+            {
+                "name": "secondDocumentType",
+                "label": "Second Document Name",
+                "type": "text"
+            },
+            {
+                "name": "correctName",
+                "label": "Correct Name",
+                "type": "text"
+            },
+            {
+                "name": "applicationDate",
+                "label": "Application Date",
+                "type": "date"
+            },
+            {
+                "name": "applicantSignatureName",
+                "label": "Name (Signature Section)",
+                "type": "text"
+            },
+            {
+                "name": "applicantAddress",
+                "label": "Address (Signature Section)",
+                "type": "textarea"
+            },
+            {
+                "name": "signatureDate",
+                "label": "Date (Signature Section)",
+                "type": "date"
+            },
+            {
+                "name": "verificationPlace",
+                "label": "Verification Place",
+                "type": "text"
+            },
+            {
+                "name": "verificationDay",
+                "label": "Verification Day",
+                "type": "number"
+            },
+            {
+                "name": "verificationMonth",
+                "label": "Verification Month",
+                "type": "text"
+            },
+            {
+                "name": "advocateName",
+                "label": "Advocate/Notary Name",
+                "type": "text"
+            },
+            {
+                "name": "advocateEnrollmentNo",
+                "label": "Advocate Enrollment Number",
+                "type": "text"
+            },
+            {
+                "name": "advocateAddress",
+                "label": "Advocate Address",
+                "type": "textarea"
+            }
+        ]
+    },
+    {
+        "id": "2",
+        "title": "Gap Certificate Affidavit",
+        "description": "Standard affidavit for explaining a gap in education for institutional admission.",
+        "category": "Educational",
+        "file": "file_storage/affidavits/AFFIDAVIT- GAP CERTIFICATE.docx",
+        "fields": [
+            {
+                "name": "fullName",
+                "label": "Full Name",
+                "type": "text"
+            },
+            {
+                "name": "age",
+                "label": "Age",
+                "type": "number"
+            },
+            {
+                "name": "parentName",
+                "label": "Son/Daughter of (Parent's Name)",
+                "type": "text"
+            },
+            {
+                "name": "address",
+                "label": "Permanent Address",
+                "type": "textarea"
+            },
+            {
+                "name": "lastQualification",
+                "label": "Last Educational Qualification",
+                "type": "text"
+            },
+            {
+                "name": "lastInstitution",
+                "label": "Last Institution Name",
+                "type": "text"
+            },
+            {
+                "name": "passingYear",
+                "label": "Passing Year",
+                "type": "number"
+            },
+            {
+                "name": "gapStartDate",
+                "label": "Gap Start Date",
+                "type": "date"
+            },
+            {
+                "name": "gapEndDate",
+                "label": "Gap End Date",
+                "type": "date"
+            },
+            {
+                "name": "gapDuration",
+                "label": "Duration of Gap",
+                "type": "text"
+            },
+            {
+                "name": "gapReason",
+                "label": "Reason for Gap",
+                "type": "textarea"
+            },
+            {
+                "name": "admissionInstitution",
+                "label": "Seeking Admission In",
+                "type": "text"
+            },
+            {
+                "name": "appDate",
+                "label": "Application Date",
+                "type": "date"
+            },
+            {
+                "name": "verificationLocation",
+                "label": "Verification Location",
+                "type": "text"
+            },
+            {
+                "name": "verificationDate",
+                "label": "Verification Date",
+                "type": "date"
+            },
+            {
+                "name": "signature",
+                "label": "Applicant Signature (Name)",
+                "type": "text"
+            }
+        ]
+    },
+    {
+        "id": "3",
+        "title": "Anti-Ragging Affidavit",
+        "description": "Mandatory student affidavit declaring non-involvement in ragging activities.",
+        "category": "Educational",
+        "file": "file_storage/affidavits/AFFIDAVIT - ANTI RAGGING.pdf",
+        "fields": [
+            {
+                "name": "fullName",
+                "label": "Student Full Name",
+                "type": "text"
+            },
+            {
+                "name": "parentName",
+                "label": "Parent's Name",
+                "type": "text"
+            },
+            {
+                "name": "institutionName",
+                "label": "Institution Name",
+                "type": "text"
+            },
+            {
+                "name": "courseName",
+                "label": "Course Name",
+                "type": "text"
+            },
+            {
+                "name": "admissionYear",
+                "label": "Admission Year",
+                "type": "number"
+            },
+            {
+                "name": "verificationLocation",
+                "label": "Verification Location",
+                "type": "text"
+            },
+            {
+                "name": "verificationDate",
+                "label": "Verification Date",
+                "type": "date"
+            },
+            {
+                "name": "signature",
+                "label": "Applicant Signature (Name)",
+                "type": "text"
+            }
+        ]
+    }
+]

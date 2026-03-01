@@ -1,0 +1,26 @@
+[
+  {
+    "id": "flat",
+    "name": "Flat Rent Agreement",
+    "description": "Rent agreement for apartments and flats.",
+    "slug": "flat"
+  },
+  {
+    "id": "house",
+    "name": "House Rent Agreement",
+    "description": "Rent agreement for independent houses and villas.",
+    "slug": "house"
+  },
+  {
+    "id": "room",
+    "name": "Room / PG Rent Agreement",
+    "description": "Agreement for single room or paying guest accommodation.",
+    "slug": "room"
+  },
+  {
+    "id": "shop",
+    "name": "Commercial / Shop Rent Agreement",
+    "description": "Rent agreement for commercial premises like shops and offices.",
+    "slug": "shop"
+  }
+]
