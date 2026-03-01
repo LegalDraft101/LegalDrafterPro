@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { Toaster } from 'sonner';
 import { store } from './store';
-import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
+import { ErrorBoundary } from './components/common/ErrorBoundary/ErrorBoundary';
 import App from './App';
 import './index.scss';
 

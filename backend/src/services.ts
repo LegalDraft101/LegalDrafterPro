@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env, isProd } from './config';
-import { userRepo } from './repo';
+import { userRepo } from './repositories/userRepository';
 import { generateOtp, hashOtp, verifyOtp, hashPassword, normalizeEmail, normalizePhone, stripInvisible } from './utils';
 import type { User } from './types';
 import type { OtpChannel, PendingOtp } from './types';

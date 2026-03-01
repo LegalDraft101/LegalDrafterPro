@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { FluentProvider, webLightTheme, webDarkTheme } from '@fluentui/react-components';
-import { AuthInit } from './components/AuthInit/AuthInit';
-import { BackendBanner } from './components/BackendBanner/BackendBanner';
-import { Navbar } from './components/Navbar/Navbar';
-import { Footer } from './components/Footer/Footer';
+import { AuthInit } from './components/features/AuthInit/AuthInit';
+import { BackendBanner } from './components/layout/BackendBanner/BackendBanner';
+import { Navbar } from './components/layout/Navbar/Navbar';
+import { Footer } from './components/layout/Footer/Footer';
 import Home from './pages/Home/Home';
 import Affidavit from './pages/Affidavit/Affidavit';
 import AffidavitForm from './pages/AffidavitForm/AffidavitForm';
-import { SignupPage, LoginPage, ForgotPasswordPage, VerifyOtpPage, AccountPage } from './pages/Pages';
-import { RentAgreementPage } from './pages/RentAgreement';
-import { PrivacyPage } from './pages/Privacy';
-import { TermsPage } from './pages/Terms';
-import { ContactPage } from './pages/Contact';
-import { NotFoundPage } from './pages/NotFound';
+import { SignupPage, LoginPage, ForgotPasswordPage, VerifyOtpPage, AccountPage } from './pages/auth';
+import { RentAgreementPage } from './pages/RentAgreement/RentAgreement';
+import { PrivacyPage } from './pages/Privacy/Privacy';
+import { TermsPage } from './pages/Terms/Terms';
+import { ContactPage } from './pages/Contact/Contact';
+import { NotFoundPage } from './pages/NotFound/NotFound';
 import './App.scss';
 
 function App() {

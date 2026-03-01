@@ -4,9 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { corsOptions } from './config';
 import { generalLimiter, errorHandler } from './middleware';
-import { authRoutes } from './authRoutes';
-import { draftRoutes } from './draftRoutes';
-import { legacyAffidavitRoutes } from './legacyAffidavitRoutes';
+import { authRoutes, draftRoutes, legacyAffidavitRoutes } from './routes';
 
 const app = express();
 

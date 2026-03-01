@@ -2,7 +2,7 @@ import React from 'react';
 import { Title1, Text, Button } from '@fluentui/react-components';
 import { DocumentRegular, SettingsRegular, AlertRegular } from '@fluentui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import FeatureCard from '../../components/FeatureCard/FeatureCard';
+import FeatureCard from '../../components/features/FeatureCard/FeatureCard';
 import './Home.scss';
 
 function Home() {
