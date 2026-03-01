@@ -1,0 +1,96 @@
+[
+    {
+        "id": "1",
+        "title": "Flat Rent Agreement",
+        "description": "Standard rent agreement for apartments and flats with comprehensive terms and conditions.",
+        "category": "Residential",
+        "file": "file_storage/rent-agreements/RENT-AGREEMENT-FLAT.txt",
+        "fields": [
+            { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
+            { "name": "landlordParentName", "label": "Landlord Father's/Husband's Name", "type": "text" },
+            { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
+            { "name": "tenantName", "label": "Tenant Full Name", "type": "text" },
+            { "name": "tenantParentName", "label": "Tenant Father's/Husband's Name", "type": "text" },
+            { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
+            { "name": "flatAddress", "label": "Flat/Premises Address", "type": "textarea" },
+            { "name": "flatDetails", "label": "Flat Details (Floor, BHK, Area)", "type": "text" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+            { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
+            { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "rentDueDay", "label": "Rent Due Day of Month", "type": "number" },
+            { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+        ]
+    },
+    {
+        "id": "2",
+        "title": "House Rent Agreement",
+        "description": "Rent agreement for independent houses and villas with property-specific clauses.",
+        "category": "Residential",
+        "file": "file_storage/rent-agreements/RENT-AGREEMENT-HOUSE.txt",
+        "fields": [
+            { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
+            { "name": "landlordParentName", "label": "Landlord Father's/Husband's Name", "type": "text" },
+            { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
+            { "name": "tenantName", "label": "Tenant Full Name", "type": "text" },
+            { "name": "tenantParentName", "label": "Tenant Father's/Husband's Name", "type": "text" },
+            { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
+            { "name": "houseAddress", "label": "House/Property Address", "type": "textarea" },
+            { "name": "houseDetails", "label": "House Details (Rooms, Area, Amenities)", "type": "text" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+            { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
+            { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+        ]
+    },
+    {
+        "id": "3",
+        "title": "Room / PG Rent Agreement",
+        "description": "Agreement for single room or paying guest accommodation with shared facility terms.",
+        "category": "Residential",
+        "file": "file_storage/rent-agreements/RENT-AGREEMENT-ROOM.txt",
+        "fields": [
+            { "name": "ownerName", "label": "Owner Full Name", "type": "text" },
+            { "name": "ownerAddress", "label": "Owner Permanent Address", "type": "textarea" },
+            { "name": "tenantName", "label": "Tenant/PG Full Name", "type": "text" },
+            { "name": "tenantAddress", "label": "Tenant Permanent Address", "type": "textarea" },
+            { "name": "propertyAddress", "label": "Property Address", "type": "textarea" },
+            { "name": "roomDetails", "label": "Room Details (Room No., Floor, Furnishing)", "type": "text" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+            { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
+            { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "noticePeriodDays", "label": "Notice Period (Days)", "type": "number" },
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+        ]
+    },
+    {
+        "id": "4",
+        "title": "Commercial / Shop Rent Agreement",
+        "description": "Rent agreement for commercial premises like shops, offices, and business spaces.",
+        "category": "Commercial",
+        "file": "file_storage/rent-agreements/RENT-AGREEMENT-SHOP.txt",
+        "fields": [
+            { "name": "landlordName", "label": "Landlord Full Name", "type": "text" },
+            { "name": "landlordAddress", "label": "Landlord Permanent Address", "type": "textarea" },
+            { "name": "tenantName", "label": "Tenant/Business Name", "type": "text" },
+            { "name": "tenantAddress", "label": "Tenant Business Address", "type": "textarea" },
+            { "name": "premisesAddress", "label": "Premises/Shop Address", "type": "textarea" },
+            { "name": "premisesDetails", "label": "Premises Details (Shop No., Area, Floor)", "type": "text" },
+            { "name": "businessPurpose", "label": "Purpose of Use / Business Activity", "type": "text" },
+            { "name": "monthlyRent", "label": "Monthly Rent (Rs.)", "type": "number" },
+            { "name": "securityDeposit", "label": "Security Deposit (Rs.)", "type": "number" },
+            { "name": "agreementStartDate", "label": "Agreement Start Date", "type": "date" },
+            { "name": "agreementEndDate", "label": "Agreement End Date", "type": "date" },
+            { "name": "noticePeriodMonths", "label": "Notice Period (Months)", "type": "number" },
+            { "name": "executionPlace", "label": "Place of Execution", "type": "text" },
+            { "name": "executionDate", "label": "Date of Execution", "type": "date" }
+        ]
+    }
+]

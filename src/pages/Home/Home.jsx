@@ -13,14 +13,24 @@ function Home() {
             <div className="hero-section">
                 <Title1 as="h1">Welcome to Legal Drafter Pro</Title1>
                 <Text className="hero-subtitle">Draft professional legal documents in minutes with AI assistance.</Text>
-                <Button
-                    appearance="primary"
-                    size="large"
-                    className="cta-button"
-                    onClick={() => navigate('/affidavit')}
-                >
-                    Generate Affidavit
-                </Button>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <Button
+                        appearance="primary"
+                        size="large"
+                        className="cta-button"
+                        onClick={() => navigate('/affidavit')}
+                    >
+                        Generate Affidavit
+                    </Button>
+                    <Button
+                        appearance="primary"
+                        size="large"
+                        className="cta-button"
+                        onClick={() => navigate('/rent-agreement')}
+                    >
+                        Rent Agreement
+                    </Button>
+                </div>
             </div>
 
             <div className="features-grid">
