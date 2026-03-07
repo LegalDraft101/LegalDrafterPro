@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-    Title1, Title3, Button, Text, Spinner, Input, Textarea, Field
-} from '@fluentui/react-components';
-import { DocumentArrowDownRegular, EditRegular } from '@fluentui/react-icons';
-import { fetchAffidavitFormatById, saveAffidavitPdf } from '../../services/apiClient';
-=======
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import {
@@ -21,7 +12,6 @@ import { fetchAffidavitFormatById, saveAffidavitPdf } from '../../services/apiCl
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthModal } from '../../components/features/AuthModal';
 import { useDraft } from '../../hooks/useDraft';
->>>>>>> origin/main
 import html2pdf from 'html2pdf.js';
 import './AffidavitForm.scss';
 
@@ -29,23 +19,14 @@ function AffidavitForm() {
     const { formatId } = useParams();
     const navigate = useNavigate();
     const documentRef = useRef();
-<<<<<<< HEAD
-=======
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
     const { saveDraft, loadDraft, deleteDraft, hasDraft } = useDraft(user, 'affidavit', formatId);
->>>>>>> origin/main
 
     const [formatData, setFormatData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({});
     const [formErrors, setFormErrors] = useState({});
-<<<<<<< HEAD
-
-    // NEW: state indicating whether the final document is currently generated
-    const [isFinalView, setIsFinalView] = useState(false);
-
-=======
     const [isFinalView, setIsFinalView] = useState(false);
 
     const [initialFormData, setInitialFormData] = useState({});
@@ -90,7 +71,6 @@ function AffidavitForm() {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasUnsavedChanges]);
 
->>>>>>> origin/main
     useEffect(() => {
         const fetchDetails = async () => {
             try {
@@ -98,14 +78,6 @@ function AffidavitForm() {
                 if (response.success) {
                     setFormatData(response.data);
 
-<<<<<<< HEAD
-                    // Initialize empty form state based on the backend schema fields
-                    const initialData = {};
-                    response.data.fields.forEach(f => {
-                        initialData[f.name] = '';
-                    });
-                    setFormData(initialData);
-=======
                     const freshData = {};
                     response.data.fields.forEach(f => {
                         freshData[f.name] = '';
@@ -126,7 +98,6 @@ function AffidavitForm() {
                         setFormData(freshData);
                         setDraftHandled(true);
                     }
->>>>>>> origin/main
                 }
             } catch (error) {
                 console.error("Failed to fetch format details", error);
@@ -140,8 +111,6 @@ function AffidavitForm() {
         }
     }, [formatId]);
 
-<<<<<<< HEAD
-=======
     const handleRestoreDraft = () => {
         if (draftMeta?.formData && formatData) {
             const freshData = {};
@@ -195,7 +164,6 @@ function AffidavitForm() {
         }
     };
 
->>>>>>> origin/main
     const handleInputChange = (e, data) => {
         const { name } = e.target;
         const value = data ? data.value : e.target.value;
@@ -205,10 +173,6 @@ function AffidavitForm() {
             [name]: value
         }));
 
-<<<<<<< HEAD
-        // Clear error when user types
-=======
->>>>>>> origin/main
         if (formErrors[name]) {
             setFormErrors(prev => {
                 const newErrors = { ...prev };
@@ -247,13 +211,6 @@ function AffidavitForm() {
     };
 
     const handleGenerate = () => {
-<<<<<<< HEAD
-        if (validateForm()) {
-            setIsFinalView(true);
-        } else {
-            // Optional: Scroll to first error or show a global toast. 
-            // In a small form, the inline red text is usually sufficient.
-=======
         if (!user) {
             requireAuth(() => handleGenerate());
             return;
@@ -262,26 +219,15 @@ function AffidavitForm() {
             deleteDraft();
             setIsFinalView(true);
         } else {
->>>>>>> origin/main
             console.warn("Form validation failed", formErrors);
         }
     };
 
-<<<<<<< HEAD
-    // Replaces the placeholder dashes (e.g., ____ or ___/___/____) with the live text.
-    // Fallback to the dashes if field is empty.
-=======
->>>>>>> origin/main
     const getLivePreviewContent = () => {
         if (!formatData || !formatData.content) return null;
 
         const blankRegex = /(_{2,}(?:\/_{2,})*)/g;
 
-<<<<<<< HEAD
-        // 1. Clean multi-spaces and tabs into single spaces
-        // 2. Clean multi-line breaks (3 or more \n) into exactly 2 \n (one blank line between paragraphs)
-=======
->>>>>>> origin/main
         const cleanContent = formatData.content
             .replace(/[ \t]+/g, ' ')
             .replace(/\n\s*\n\s*\n+/g, '\n\n');
@@ -291,13 +237,7 @@ function AffidavitForm() {
         let globalBlankIndex = 0;
 
         return paragraphs.map((paragraph, pIdx) => {
-<<<<<<< HEAD
-            // Drop completely empty strings that aren't intended breaks, but keep intended spacing
             if (!paragraph) {
-                // only insert a minimal visual break if it's an empty line between text
-=======
-            if (!paragraph) {
->>>>>>> origin/main
                 return <div key={pIdx} className="paragraph-spacer" style={{ height: '0.75rem' }} />;
             }
 
@@ -307,17 +247,9 @@ function AffidavitForm() {
                 <p key={pIdx} className="preview-paragraph">
                     {parts.map((part, i) => {
                         if (i % 2 === 1) {
-<<<<<<< HEAD
-                            // This part is a dashed blank
                             const field = formatData.fields[globalBlankIndex];
                             globalBlankIndex++;
 
-                            // If we have a matching field definition and the user filled it
-=======
-                            const field = formatData.fields[globalBlankIndex];
-                            globalBlankIndex++;
-
->>>>>>> origin/main
                             if (field && formData[field.name]) {
                                 return (
                                     <span key={i} className={isFinalView ? "final-value" : "live-value"} title={!isFinalView ? `Filled from: ${field.label}` : ""}>
@@ -325,15 +257,8 @@ function AffidavitForm() {
                                     </span>
                                 );
                             }
-<<<<<<< HEAD
-                            // Otherwise, just show the dashes
                             return <span key={i} className="empty-blank"> {part} </span>;
                         }
-                        // Normal text Document Content
-=======
-                            return <span key={i} className="empty-blank"> {part} </span>;
-                        }
->>>>>>> origin/main
                         return <span key={i}>{part}</span>;
                     })}
                 </p>
@@ -353,15 +278,8 @@ function AffidavitForm() {
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
-<<<<<<< HEAD
-        // 1. Generate and save locally
         html2pdf().set(opt).from(element).save();
 
-        // 2. Generate Blob and send to backend
-=======
-        html2pdf().set(opt).from(element).save();
-
->>>>>>> origin/main
         try {
             const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
             const response = await saveAffidavitPdf(pdfBlob, filename);
@@ -389,10 +307,6 @@ function AffidavitForm() {
         );
     }
 
-<<<<<<< HEAD
-    // FINAL DOCUMENT VIEW
-=======
->>>>>>> origin/main
     if (isFinalView) {
         return (
             <div className="affidavit-final-page">
@@ -423,13 +337,6 @@ function AffidavitForm() {
         );
     }
 
-<<<<<<< HEAD
-    // SPLIT EDITOR VIEW
-    return (
-        <div className="affidavit-form-page">
-            <div className="split-layout">
-                {/* LEFT PANE: Dynamic Form */}
-=======
     return (
         <div className="affidavit-form-page">
             <div className="form-top-bar">
@@ -454,7 +361,6 @@ function AffidavitForm() {
             </div>
 
             <div className="split-layout">
->>>>>>> origin/main
                 <div className="left-pane glass-pane">
                     <Title1 as="h2" className="form-title">{formatData.title}</Title1>
                     <Text className="form-desc">{formatData.description}</Text>
@@ -508,10 +414,6 @@ function AffidavitForm() {
                     </Button>
                 </div>
 
-<<<<<<< HEAD
-                {/* RIGHT PANE: Live Preview */}
-=======
->>>>>>> origin/main
                 <div className="right-pane glass-pane preview-pane">
                     <Text weight="semibold" size={500} className="preview-header">Live Preview</Text>
                     <div className="preview-content">
@@ -521,8 +423,6 @@ function AffidavitForm() {
                     </div>
                 </div>
             </div>
-<<<<<<< HEAD
-=======
 
             <Dialog open={showDraftDialog} modalType="alert">
                 <DialogSurface>
@@ -570,7 +470,6 @@ function AffidavitForm() {
                     </DialogBody>
                 </DialogSurface>
             </Dialog>
->>>>>>> origin/main
         </div>
     );
 }
