@@ -1,0 +1,14 @@
+[
+  {
+    "id": "name-difference",
+    "name": "Affidavit for Name Difference",
+    "description": "Affidavit to declare that two different name spellings in official documents refer to the same person.",
+    "slug": "name-difference"
+  },
+  {
+    "id": "gap-certificate",
+    "name": "Affidavit for Gap Certificate",
+    "description": "Affidavit declaring the reason for a gap in education, required for admission purposes.",
+    "slug": "gap-certificate"
+  }
+]

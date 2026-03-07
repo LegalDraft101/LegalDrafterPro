@@ -9,20 +9,50 @@
 }
 
 .affidavit-form-page {
-    padding: 2rem 4rem;
+    padding: 1rem 4rem 2rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
     height: calc(100vh - 64px);
-    /* Account for header */
     box-sizing: border-box;
     overflow: hidden;
-    /* Prevent page-level scroll */
 
     @media (max-width: 900px) {
         padding: 1rem 2rem;
         height: auto;
         overflow: visible;
+    }
+}
+
+.form-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.back-btn {
+    font-weight: 500;
+    border-radius: 8px !important;
+    padding: 0.4rem 0.75rem !important;
+    transition: all 0.15s ease;
+
+    &:hover {
+        transform: translateX(-2px);
+    }
+}
+
+.save-draft-btn {
+    font-weight: 500;
+    border-radius: 8px !important;
+    padding: 0.4rem 0.75rem !important;
+
+    .light-mode & {
+        color: #059669;
+    }
+
+    .dark-mode & {
+        color: #34d399;
     }
 }
 
@@ -327,4 +357,37 @@
 .final-value {
     display: inline;
     font-weight: 600;
+}
+
+.clause-section-header {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .light-mode & {
+        background: linear-gradient(135deg, #ebf5ff 0%, #f0f7ff 100%);
+        border-left: 4px solid #3b82f6;
+    }
+
+    .dark-mode & {
+        background: rgba(59, 130, 246, 0.08);
+        border-left: 4px solid #60a5fa;
+    }
+
+    h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+
+        .light-mode & {
+            color: #1e40af;
+        }
+
+        .dark-mode & {
+            color: #93bbfc;
+        }
+    }
 }

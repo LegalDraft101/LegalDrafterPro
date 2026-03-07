@@ -1,0 +1,14 @@
+{
+  "typeId": "room",
+  "typeName": "Room / PG Rent Agreement",
+  "fields": [
+    { "id": "ownerName", "name": "ownerName", "label": "Owner/Landlord name", "type": "text", "required": true, "placeholder": "Full name" },
+    { "id": "tenantName", "name": "tenantName", "label": "Tenant's full name", "type": "text", "required": true, "placeholder": "Tenant name" },
+    { "id": "propertyAddress", "name": "propertyAddress", "label": "Property address", "type": "textarea", "required": true, "placeholder": "Full address" },
+    { "id": "roomDetails", "name": "roomDetails", "label": "Room details", "type": "text", "required": true, "placeholder": "e.g. Single room, shared bathroom" },
+    { "id": "monthlyRent", "name": "monthlyRent", "label": "Monthly rent (₹)", "type": "number", "required": true, "placeholder": "Amount" },
+    { "id": "securityDeposit", "name": "securityDeposit", "label": "Security deposit (₹)", "type": "number", "required": false, "placeholder": "If any" },
+    { "id": "startDate", "name": "startDate", "label": "Agreement start date", "type": "date", "required": true },
+    { "id": "endDate", "name": "endDate", "label": "Agreement end date", "type": "date", "required": true }
+  ]
+}

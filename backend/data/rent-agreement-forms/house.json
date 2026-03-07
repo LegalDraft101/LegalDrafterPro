@@ -1,0 +1,16 @@
+{
+  "typeId": "house",
+  "typeName": "House Rent Agreement",
+  "fields": [
+    { "id": "landlordName", "name": "landlordName", "label": "Landlord's full name", "type": "text", "required": true, "placeholder": "Owner/Landlord name" },
+    { "id": "landlordAddress", "name": "landlordAddress", "label": "Landlord's address", "type": "textarea", "required": true, "placeholder": "Permanent address" },
+    { "id": "tenantName", "name": "tenantName", "label": "Tenant's full name", "type": "text", "required": true, "placeholder": "Tenant name" },
+    { "id": "tenantAddress", "name": "tenantAddress", "label": "Tenant's permanent address", "type": "textarea", "required": true, "placeholder": "Address" },
+    { "id": "propertyAddress", "name": "propertyAddress", "label": "House/Property address", "type": "textarea", "required": true, "placeholder": "Full address of the house" },
+    { "id": "houseDetails", "name": "houseDetails", "label": "House details (floors, rooms, etc.)", "type": "text", "required": true, "placeholder": "e.g. Ground + 1, 3 bedrooms" },
+    { "id": "monthlyRent", "name": "monthlyRent", "label": "Monthly rent (₹)", "type": "number", "required": true, "placeholder": "Amount" },
+    { "id": "securityDeposit", "name": "securityDeposit", "label": "Security deposit (₹)", "type": "number", "required": true, "placeholder": "Amount" },
+    { "id": "startDate", "name": "startDate", "label": "Agreement start date", "type": "date", "required": true },
+    { "id": "endDate", "name": "endDate", "label": "Agreement end date", "type": "date", "required": true }
+  ]
+}

@@ -1,3 +1,5 @@
+@import './styles/variables.css';
+
 :root {
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
@@ -15,7 +17,8 @@
 
 body {
   margin: 0;
-  display: block; /* Removed flex from body since we handle it in app-container */
+  display: block;
+  /* Removed flex from body since we handle it in app-container */
   min-width: 320px;
   min-height: 100vh;
   color: #333;

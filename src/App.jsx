@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { FluentProvider, webLightTheme, webDarkTheme } from '@fluentui/react-components';
-import Header from './components/Header/Header';
-import Home from './pages/Home/Home';
-import Affidavit from './pages/Affidavit/Affidavit';
-import AffidavitForm from './pages/AffidavitForm/AffidavitForm';
+import { AuthInit } from './components/features/AuthInit/AuthInit';
+import { AuthModalProvider, AuthModal } from './components/features/AuthModal';
+import { BackendBanner } from './components/layout/BackendBanner/BackendBanner';
+import { Navbar } from './components/layout/Navbar/Navbar';
+import { Footer } from './components/layout/Footer/Footer';
 import './App.scss';
 
 function App() {
@@ -12,16 +13,17 @@ function App() {
 
   return (
     <FluentProvider theme={isDarkMode ? webDarkTheme : webLightTheme} className="fluent-root">
-      <Router>
-        <div className={`app-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
-          <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/affidavit" element={<Affidavit />} />
-            <Route path="/affidavit/:formatId" element={<AffidavitForm isDarkMode={isDarkMode} />} />
-          </Routes>
-        </div>
-      </Router>
+      <AuthInit>
+        <AuthModalProvider>
+          <div className={`app-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+            <BackendBanner />
+            <Navbar />
+            <Outlet />
+            <Footer />
+          </div>
+          <AuthModal />
+        </AuthModalProvider>
+      </AuthInit>
     </FluentProvider>
   );
 }

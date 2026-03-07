@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Title1, Button, Text, Dropdown, Option, Spinner } from '@fluentui/react-components';
 import { DocumentArrowUpRegular, DocumentCopyRegular } from '@fluentui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import FeatureCard from '../../components/FeatureCard/FeatureCard';
+import FeatureCard from '../../components/features/FeatureCard/FeatureCard';
 import { fetchAffidavitFormats } from '../../services/apiClient';
 import './Affidavit.scss';
 
