@@ -4,7 +4,6 @@
   "private": true,
   "description": "",
   "main": "dist/index.js",
-  "type": "module",
   "scripts": {
     "dev": "npx ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "npm install --include=dev && tsc",
