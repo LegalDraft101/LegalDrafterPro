@@ -25,7 +25,9 @@ const getNum = (key: string, defaultValue: number): number => {
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? 'development',
   PORT: getNum('PORT', 4000),
-  ORIGIN: get('ORIGIN', 'http://localhost:5173'),
+  ORIGIN: get('ORIGIN', process.env.NODE_ENV === 'production'
+    ? 'https://legaldrafterpro-1.onrender.com'
+    : 'http://localhost:5173'),
   JWT_SECRET: get('JWT_SECRET', 'dev-secret-change-in-production'),
   ACCESS_TOKEN_TTL_DAYS: getNum('ACCESS_TOKEN_TTL_DAYS', 10),
   REFRESH_TOKEN_TTL_DAYS: getNum('REFRESH_TOKEN_TTL_DAYS', 7),
@@ -43,7 +45,7 @@ export const env = {
   TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER ?? '',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? '',
-  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL ?? `${process.env.ORIGIN ?? 'http://localhost:5173'}/auth/google/callback`,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL ?? `${process.env.ORIGIN ?? (process.env.NODE_ENV === 'production' ? 'https://legaldrafterpro-1.onrender.com' : 'http://localhost:5173')}/auth/google/callback`,
   SUPABASE_URL: get('SUPABASE_URL', ''),
   SUPABASE_SERVICE_ROLE_KEY: get('SUPABASE_SERVICE_ROLE_KEY', ''),
   DATABASE_URL: get('DATABASE_URL', ''),

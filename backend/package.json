@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "npx ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "npm install --include=dev && tsc",
+    "build": "npm install --include=dev && npx tsc && node -e \"require('fs').existsSync('dist/index.js') || process.exit(1)\"",
     "start": "node dist/index.js",
     "test": "jest --passWithNoTests"
   },

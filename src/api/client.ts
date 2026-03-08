@@ -5,7 +5,10 @@
  */
 import { auth } from '../lib/firebase';
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+const API_BASE = (
+  import.meta.env.VITE_API_URL
+  ?? (import.meta.env.PROD ? 'https://legaldrafterpro.onrender.com' : '')
+).replace(/\/+$/, '');
 
 export function buildUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
