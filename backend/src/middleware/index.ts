@@ -60,19 +60,17 @@ export async function authGuard(req: AuthRequest, res: Response, next: NextFunct
     }
 
     if (!user) {
-      if (req.path === '/signup') {
-        // If it's a signup request, we allow it to pass even without a user in the DB.
-        // We attach the verified Firebase token info so the controller can use it.
+      const allowedNewUserPaths = ['/signup', '/google-create'];
+      if (allowedNewUserPaths.includes(req.path)) {
         req.user = {
-          sub: decodedToken.uid, // Firebase UID
-          tokenVersion: 1, // Default
-          name: '',
+          sub: decodedToken.uid,
+          tokenVersion: 1,
+          name: decodedToken.name || '',
           phone: decodedToken.phone_number || '',
           email: decodedToken.email || '',
           iat: decodedToken.iat,
           exp: decodedToken.exp
         };
-        // We intercept the req object to pass decoded token for exact verifications
         (req as any).firebaseUser = decodedToken;
         return next();
       }

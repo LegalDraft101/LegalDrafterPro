@@ -1,57 +1,12 @@
 /**
  * Shared types for API requests/responses.
- * Keep all API-related types here for a single source of truth.
  */
 
 // ---- Auth ----
-export type SignupOtpChannel = 'email' | 'phone';
-
 export interface SignupPayload {
   name: string;
   email: string;
   phone: string;
-  password?: string;
-  otpChannel?: SignupOtpChannel;
-}
-
-export interface LoginPayload {
-  emailOrPhone: string;
-}
-
-export interface RequestOtpPayload {
-  channel: 'email' | 'phone';
-  email?: string;
-  phone?: string;
-}
-
-export interface VerifyOtpPayload {
-  channel: 'email' | 'phone';
-  email?: string;
-  phone?: string;
-  code: string;
-}
-
-export interface VerifySignupPayload {
-  name: string;
-  email: string;
-  phone: string;
-  password?: string;
-  emailCode: string;
-  phoneCode: string;
-}
-
-export interface ForgotPasswordPayload {
-  channel: 'email' | 'phone';
-  email?: string;
-  phone?: string;
-}
-
-export interface ResetPasswordPayload {
-  channel: 'email' | 'phone';
-  email?: string;
-  phone?: string;
-  code: string;
-  newPassword: string;
 }
 
 // ---- Drafting (affidavit & rent agreement) ----

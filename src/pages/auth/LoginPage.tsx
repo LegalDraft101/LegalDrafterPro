@@ -41,6 +41,7 @@ const loginSchema = z.object({
 
 import { fetchUser } from '../../store/slices/authSlice';
 import { useAppDispatch } from '../../store/hooks';
+import { authApi } from '../../api/auth';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -128,6 +129,12 @@ export function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      try {
+        await authApi.googleCreate();
+      } catch {
+        // DB record may already exist; fetchUser will handle it
+      }
+      await dispatch(fetchUser());
       toast.success('Logged in with Google!');
       navigate('/');
     } catch (err: any) {

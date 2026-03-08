@@ -12,21 +12,24 @@ export function AuthInit({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
-        if (!user.emailVerified) {
-          // Account exists but email is not yet verified
-          // Don't load their profile - treat them as logged out
+        // Google and phone users have special sign-in methods -- don't
+        // force them through email verification if they didn't use email/password.
+        const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+        const isPhoneUser = user.providerData.some(p => p.providerId === 'phone');
+        const needsEmailVerification = !user.emailVerified && !isGoogleUser && !isPhoneUser;
+        const isSignupInProgress = !!(window as any).pendingSignupData
+          || window.location.pathname.startsWith('/signup');
+
+        if (needsEmailVerification && !isSignupInProgress) {
           dispatch(setUser(null));
           dispatch(setLoading(false));
-          // Redirect to verify-email page if not already there
           if (!window.location.pathname.startsWith('/verify-email')) {
             navigate('/verify-email');
           }
         } else {
-          // Fully verified: sync with backend profile
           dispatch(fetchUser());
         }
       } else {
-        // Logged out
         dispatch(setUser(null));
         dispatch(setLoading(false));
       }

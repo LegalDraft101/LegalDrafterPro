@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,10 +13,11 @@ import {
   Input,
   Text,
   Divider,
+  Spinner,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { Dismiss24Regular, EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
+import { Dismiss24Regular, EyeRegular, EyeOffRegular, CheckmarkCircle24Filled, MailRegular, PhoneRegular } from '@fluentui/react-icons';
 import { useAuthModal } from './AuthModalContext';
 import { api } from '../../../api/index';
 import { auth } from '../../../lib/firebase';
@@ -25,25 +26,30 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signInWithPhoneNumber,
+  linkWithPhoneNumber,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendEmailVerification,
+  deleteUser,
 } from 'firebase/auth';
 import { emailSchema, passwordSchema, isEmailTechnicallyCorrect } from '../../../lib/validation';
 import { GoogleIcon } from '../../common/Shared/Shared';
+import { fetchUser } from '../../../store/slices/authSlice';
+import { useAppDispatch } from '../../../store/hooks';
+import { useAuth } from '../../../hooks/useAuth';
 
 const INDIA_PREFIX = '+91';
 
-type ModalView = 'login' | 'signup' | 'verify';
+type ModalView = 'login' | 'signup' | 'verify-login-otp' | 'verify-email' | 'verify-phone';
 
-interface VerifyState {
-  channel: 'email' | 'phone';
-  email?: string;
-  phone?: string;
-  target: string;
+interface PendingSignup {
+  name: string;
+  email: string;
+  phone: string;
 }
 
-// ---- Zod schemas (same as auth pages) ----
+// ---- Zod schemas ----
 
 const loginSchema = z.object({
   emailOrPhone: z.string().trim().min(1, 'Add a valid email address').refine(
@@ -73,7 +79,7 @@ const signupSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Passwords do not match', path: ['confirmPassword'] });
 });
 
-const verifySchema = z.object({
+const otpSchema = z.object({
   code: z.string().length(6, 'Enter 6-digit code').regex(/^\d{6}$/, 'Digits only'),
 });
 
@@ -187,9 +193,6 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     padding: '0 4px',
   },
-  otpChannelRow: {
-    marginTop: '4px',
-  },
   passwordFieldsError: {
     border: `1px solid ${tokens.colorPaletteRedBorder1}`,
     borderRadius: '8px',
@@ -206,18 +209,17 @@ const useStyles = makeStyles({
   },
 });
 
-// ---- Sub-views ----
-
-import { fetchUser } from '../../../store/slices/authSlice';
-import { useAppDispatch } from '../../../store/hooks';
+// ---- LoginView ----
 
 function LoginView({
   onSwitchToSignup,
-  onVerify,
+  onLoginSuccess,
+  onPhoneOtp,
   styles: s,
 }: {
   onSwitchToSignup: () => void;
-  onVerify: (state: VerifyState) => void;
+  onLoginSuccess: () => void;
+  onPhoneOtp: (phone: string) => void;
   styles: ReturnType<typeof useStyles>;
 }) {
   const [loading, setLoading] = useState(false);
@@ -243,31 +245,24 @@ function LoginView({
           return;
         }
         await signInWithEmailAndPassword(auth, trimmed.toLowerCase(), data.password);
-
-        // Wait a tiny bit for the auth state token to be registered in axios interceptors
         setTimeout(async () => {
           await dispatch(fetchUser());
           toast.success('Logged in successfully!');
-          onVerify({ channel: 'email', target: 'success' });
+          onLoginSuccess();
         }, 500);
       } else {
         const normalized = trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed;
 
-        if (!(window as any).modalRecaptchaVerifier) {
-          (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', {
-            size: 'invisible',
-          });
+        if ((window as any).modalRecaptchaVerifier) {
+          try { (window as any).modalRecaptchaVerifier.clear(); } catch {}
+          (window as any).modalRecaptchaVerifier = undefined;
         }
-
+        (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', { size: 'invisible' });
         const confirmationResult = await signInWithPhoneNumber(auth, normalized, (window as any).modalRecaptchaVerifier);
         (window as any).confirmationResult = confirmationResult;
 
         toast.success('OTP sent to your phone.');
-        onVerify({
-          channel: 'phone',
-          phone: normalized,
-          target: normalized,
-        });
+        onPhoneOtp(normalized);
       }
     } catch (e: any) {
       toast.error(e.message || 'Login failed');
@@ -286,8 +281,10 @@ function LoginView({
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      try { await api.googleCreate(); } catch {}
+      await dispatch(fetchUser());
       toast.success('Logged in with Google!');
-      onVerify({ channel: 'email', target: 'success' }); // trigger success 
+      onLoginSuccess();
     } catch (err: any) {
       toast.error(err.message || 'Google sign-in failed.');
     }
@@ -359,13 +356,15 @@ function LoginView({
   );
 }
 
+// ---- SignupView ----
+
 function SignupView({
   onSwitchToLogin,
-  onVerify,
+  onEmailVerify,
   styles: s,
 }: {
   onSwitchToLogin: () => void;
-  onVerify: (state: VerifyState) => void;
+  onEmailVerify: (data: PendingSignup) => void;
   styles: ReturnType<typeof useStyles>;
 }) {
   const [loading, setLoading] = useState(false);
@@ -386,15 +385,13 @@ function SignupView({
       const emailVal = data.email.trim().toLowerCase();
       const phoneVal = INDIA_PREFIX + data.phone.replace(/\D/g, '').slice(0, 10);
 
-      // Gracefully handle partial signups where Firebase has the user but DB does not.
       let userCredential;
       try {
         userCredential = await createUserWithEmailAndPassword(auth, emailVal, data.password);
-        try { await updateProfile(userCredential.user, { displayName: data.name.trim() }); } catch (err) { }
+        try { await updateProfile(userCredential.user, { displayName: data.name.trim() }); } catch {}
       } catch (fbErr: any) {
         if (fbErr.code === 'auth/email-already-in-use') {
           try {
-            // Attempt to login to get the currentUser so they can finish verification
             userCredential = await signInWithEmailAndPassword(auth, emailVal, data.password);
           } catch (loginErr: any) {
             if (loginErr.code === 'auth/wrong-password' || loginErr.code === 'auth/invalid-credential') {
@@ -407,33 +404,18 @@ function SignupView({
         }
       }
 
-      // We do not immediately call backend api.signup yet, because they need both email and phone verified.
-      // We start the Phone verification flow via Recaptcha and Firebase
-      if (!(window as any).modalRecaptchaVerifier) {
-        (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', {
-          size: 'invisible',
-        });
+      // Send email verification link
+      if (auth.currentUser && !auth.currentUser.emailVerified) {
+        await sendEmailVerification(auth.currentUser);
       }
 
-      const confirmationResult = await signInWithPhoneNumber(auth, phoneVal, (window as any).modalRecaptchaVerifier);
-      (window as any).confirmationResult = confirmationResult;
+      const pending: PendingSignup = { name: data.name.trim(), email: emailVal, phone: phoneVal };
+      (window as any).pendingSignupData = pending;
 
-      toast.success('Successfully created credentials. Now verifying...', { duration: 3000 });
-
-      // Store info to be sent to backend later
-      (window as any).pendingSignupData = {
-        name: data.name.trim(),
-        email: emailVal,
-        phone: phoneVal,
-      };
-
-      onVerify({ channel: 'phone', target: phoneVal });
+      toast.info('Verification link sent to your email.');
+      onEmailVerify(pending);
     } catch (e: any) {
       toast.error(e.message || 'Signup failed');
-      if ((window as any).modalRecaptchaVerifier) {
-        (window as any).modalRecaptchaVerifier.clear();
-        (window as any).modalRecaptchaVerifier = undefined;
-      }
     } finally {
       setLoading(false);
     }
@@ -507,7 +489,7 @@ function SignupView({
         </div>
         <div className={s.submitRow}>
           <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Processing...' : 'Verify Email & Phone'}
+            {loading ? 'Processing...' : 'Create Account'}
           </Button>
         </div>
       </form>
@@ -519,48 +501,35 @@ function SignupView({
   );
 }
 
-import { sendEmailVerification } from 'firebase/auth';
+// ---- VerifyEmailView (signup step 1) ----
 
-import { useAuth } from '../../../hooks/useAuth';
-
-function VerifyView({
-  verifyState,
-  onBack,
-  onSuccess,
+function VerifyEmailView({
+  pendingData,
+  onEmailVerified,
+  onCancel,
   styles: s,
 }: {
-  verifyState: VerifyState;
-  onBack: () => void;
-  onSuccess: () => void;
+  pendingData: PendingSignup;
+  onEmailVerified: () => void;
+  onCancel: () => void;
   styles: ReturnType<typeof useStyles>;
 }) {
-  const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const { setUser } = useAuth();
-
-  const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof verifySchema>>({
-    resolver: zodResolver(verifySchema),
-  });
-
-  // Track if this is a first-time signup flow
-  const isSignupFlow = !!(window as any).pendingSignupData;
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    // Attempt to automatically check email verification status
-    let interval: NodeJS.Timeout;
-    if (isSignupFlow && !emailVerified && auth.currentUser) {
-      interval = setInterval(async () => {
-        await auth.currentUser?.reload();
-        if (auth.currentUser?.emailVerified) {
-          setEmailVerified(true);
-          toast.success("Email verified!");
-        }
-      }, 3000);
-    }
+    if (verified) return;
+    const interval = setInterval(async () => {
+      if (!auth.currentUser) return;
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        setVerified(true);
+        toast.success('Email verified!');
+        onEmailVerified();
+      }
+    }, 3000);
     return () => clearInterval(interval);
-  }, [isSignupFlow, emailVerified]);
+  }, [verified, onEmailVerified]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -568,194 +537,292 @@ function VerifyView({
     return () => clearInterval(t);
   }, [resendCooldown]);
 
-  const finalizeSignup = async () => {
-    try {
-      setLoading(true);
-      const data = (window as any).pendingSignupData;
-      if (!data) throw new Error("Missing signup data");
-
-      // Token is automatically injected by frontend axios interceptor if auth.currentUser exists
-      // The backend will now verify the Firebase token
-      const res = await api.signup({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-      });
-
-      if (res.user) {
-        setUser(res.user);
-      }
-
-      toast.success('Account created and verified successfully!');
-      (window as any).pendingSignupData = null; // Clear
-      onSuccess();
-    } catch (e: any) {
-      toast.error(e.message || 'Finalizing backend signup failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // We automatically finalize when both are verified in a signup flow
-  useEffect(() => {
-    if (isSignupFlow && phoneVerified && emailVerified && auth.currentUser) {
-      finalizeSignup();
-    }
-  }, [phoneVerified, emailVerified, isSignupFlow]);
-
-
-  const onSubmit = async (data: z.infer<typeof verifySchema>) => {
-    setLoading(true);
-    try {
-      const cr = (window as any).confirmationResult;
-      if (!cr) throw new Error('No active verification session.');
-      await cr.confirm(data.code);
-      toast.success('Phone verified.');
-      setPhoneVerified(true);
-
-      if (!isSignupFlow) {
-        // Just a standard login flow
-        onSuccess();
-      } else {
-        // If it's signup, we also need to enforce email checking.
-        if (auth.currentUser && !auth.currentUser.emailVerified) {
-          await sendEmailVerification(auth.currentUser);
-          toast.info('Verification link sent to your email. Please click it to continue.');
-        } else if (auth.currentUser && auth.currentUser.emailVerified) {
-          setEmailVerified(true);
-        }
-      }
-    } catch (e: any) {
-      toast.error(e.message || 'Invalid or expired code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onResendPhone = async () => {
-    if (resendCooldown > 0) return;
-    setLoading(true);
-    try {
-      if (!(window as any).modalRecaptchaVerifier) {
-        (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', { size: 'invisible' });
-      }
-      const confirmationResult = await signInWithPhoneNumber(auth, verifyState.target, (window as any).modalRecaptchaVerifier);
-      (window as any).confirmationResult = confirmationResult;
-      toast.success('Phone code sent again.');
-      setResendCooldown(60);
-    } catch (e: any) {
-      toast.error(e.message || 'Resend failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onResendEmail = async () => {
-    if (!auth.currentUser) return;
+  const onResend = async () => {
+    if (resendCooldown > 0 || !auth.currentUser) return;
     try {
       await sendEmailVerification(auth.currentUser);
-      toast.success('Email verification resent!');
+      setResendCooldown(60);
+      toast.success('Verification email resent!');
     } catch (e: any) {
       toast.error(e.message || 'Could not resend email.');
     }
   };
 
-  const maskedTarget = verifyState.target.length <= 4
-    ? '****'
-    : verifyState.target.slice(0, 2) + '****' + verifyState.target.slice(-2);
-
   return (
     <div className={s.verifyCenter}>
-      {isSignupFlow && (
-        <div style={{ marginBottom: '16px', textAlign: 'left', backgroundColor: tokens.colorBrandBackground2, padding: '12px', borderRadius: '8px' }}>
-          <Text style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Complete Registration</Text>
-          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px' }}>
-            <li style={{ color: phoneVerified ? tokens.colorPaletteGreenForeground1 : tokens.colorNeutralForeground1 }}>
-              {phoneVerified ? '✅ Phone Verified' : '⏳ Verify Phone OTP'}
-            </li>
-            <li style={{ color: emailVerified ? tokens.colorPaletteGreenForeground1 : tokens.colorNeutralForeground1, marginTop: '4px' }}>
-              {emailVerified ? '✅ Email Verified' : '⏳ Click verification link sent to email'}
-            </li>
-          </ul>
-        </div>
-      )}
+      <div style={{ marginBottom: '16px', textAlign: 'left', backgroundColor: tokens.colorBrandBackground2, padding: '12px', borderRadius: '8px' }}>
+        <Text style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Step 1 of 2</Text>
+        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', listStyle: 'none' }}>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '6px', color: verified ? tokens.colorPaletteGreenForeground1 : tokens.colorBrandForeground1, fontWeight: 600 }}>
+            {verified ? <CheckmarkCircle24Filled /> : <MailRegular />}
+            {verified ? 'Email Verified' : 'Verify Email (current)'}
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', color: tokens.colorNeutralForeground4 }}>
+            <PhoneRegular />
+            Verify Phone (next)
+          </li>
+        </ul>
+      </div>
 
-      {(!isSignupFlow || !phoneVerified) && (
-        <>
-          <Text className={s.subtitle}>We sent a 6-digit phone code to {maskedTarget}</Text>
-          <form onSubmit={handleSubmit(onSubmit)} className={s.verifyForm}>
-            <div className={s.inputGroup}>
-              <label htmlFor="modal-code" className={s.label}>Verification code</label>
-              <Input id="modal-code" type="text" maxLength={6} placeholder="000000" autoComplete="one-time-code" disabled={phoneVerified} {...register('code')} />
-              {errors.code && <span className={s.fieldError} role="alert">{errors.code.message}</span>}
-            </div>
-            <Button type="submit" appearance="primary" disabled={loading || phoneVerified} style={{ width: '100%' }}>
-              {loading ? 'Verifying\u2026' : 'Verify Phone'}
-            </Button>
-            <Button appearance="outline" onClick={onResendPhone} disabled={resendCooldown > 0 || loading || phoneVerified} style={{ width: '100%' }}>
-              {resendCooldown > 0 ? `Resend Phone OTP in ${resendCooldown}s` : 'Resend Phone OTP'}
-            </Button>
-          </form>
-        </>
-      )}
-
-      {isSignupFlow && phoneVerified && !emailVerified && (
-        <div style={{ marginTop: '20px' }}>
-          <Text style={{ display: 'block', marginBottom: '12px' }}>Waiting for email verification...</Text>
-          <Button appearance="outline" onClick={onResendEmail} style={{ width: '100%' }}>
-            Resend Verification Email
+      {!verified ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
+          <MailRegular style={{ fontSize: '40px', color: tokens.colorBrandForeground1 }} />
+          <Text style={{ display: 'block', fontWeight: 500 }}>Check your inbox</Text>
+          <Text style={{ display: 'block', fontWeight: 600, color: tokens.colorBrandForeground1, fontSize: '13px' }}>
+            {pendingData.email}
+          </Text>
+          <Text style={{ fontSize: '12px', color: tokens.colorNeutralForeground3 }}>
+            Click the link in your email to continue.
+          </Text>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Spinner size="tiny" />
+            <Text style={{ fontSize: '12px', color: tokens.colorNeutralForeground3 }}>Waiting...</Text>
+          </div>
+          <Button appearance="secondary" onClick={onResend} disabled={resendCooldown > 0} style={{ width: '100%' }}>
+            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Email'}
           </Button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '8px 0' }}>
+          <CheckmarkCircle24Filled style={{ fontSize: '40px', color: tokens.colorPaletteGreenForeground1 }} />
+          <Text style={{ fontWeight: 600 }}>Sending phone OTP...</Text>
+          <Spinner size="small" />
         </div>
       )}
 
       <div className={s.switchRow}>
-        <button type="button" className={s.link} onClick={onBack}>&larr; Back to Login</button>
+        <button type="button" className={s.link} onClick={onCancel}>Cancel and start over</button>
       </div>
     </div>
   );
 }
 
-// ---- Main modal ----
+// ---- VerifyPhoneView (signup step 2 OR login phone OTP) ----
+
+function VerifyPhoneView({
+  phone,
+  isSignup,
+  onSuccess,
+  onBack,
+  styles: s,
+}: {
+  phone: string;
+  isSignup: boolean;
+  onSuccess: () => void;
+  onBack: () => void;
+  styles: ReturnType<typeof useStyles>;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const { setUser } = useAuth();
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+  });
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
+
+  const onSubmit = async (data: z.infer<typeof otpSchema>) => {
+    setLoading(true);
+    try {
+      const cr = (window as any).confirmationResult;
+      if (!cr) throw new Error('No active verification session.');
+      if (auth.currentUser) await auth.currentUser.getIdToken(true);
+
+      try {
+        await cr.confirm(data.code);
+      } catch (confirmErr: any) {
+        if (confirmErr?.code === 'auth/invalid-verification-code' || confirmErr?.code === 'auth/code-expired') {
+          throw confirmErr;
+        }
+        if (auth.currentUser) {
+          await auth.currentUser.reload();
+          const hasPhone = auth.currentUser.providerData.some((p: any) => p.providerId === 'phone');
+          if (!hasPhone) throw confirmErr;
+        } else {
+          throw confirmErr;
+        }
+      }
+
+      toast.success('Phone verified!');
+
+      if (isSignup) {
+        const pending = (window as any).pendingSignupData as PendingSignup | null;
+        if (!pending) throw new Error('Missing signup data');
+        const res = await api.signup({ name: pending.name, email: pending.email, phone: pending.phone });
+        if (res.user) setUser(res.user);
+        (window as any).pendingSignupData = null;
+        toast.success('Account created successfully!');
+      }
+
+      onSuccess();
+    } catch (e: any) {
+      reset();
+      const msg = e?.code === 'auth/invalid-verification-code'
+        ? 'Invalid code. Please try again.'
+        : e?.code === 'auth/code-expired'
+          ? 'Code expired. Please resend.'
+          : (e.message || 'Verification failed');
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    if (resendCooldown > 0) return;
+    setLoading(true);
+    try {
+      if ((window as any).modalRecaptchaVerifier) {
+        try { (window as any).modalRecaptchaVerifier.clear(); } catch {}
+        (window as any).modalRecaptchaVerifier = undefined;
+      }
+      (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', { size: 'invisible' });
+
+      let confirmationResult;
+      if (isSignup && auth.currentUser) {
+        confirmationResult = await linkWithPhoneNumber(auth.currentUser, phone, (window as any).modalRecaptchaVerifier);
+      } else {
+        confirmationResult = await signInWithPhoneNumber(auth, phone, (window as any).modalRecaptchaVerifier);
+      }
+      (window as any).confirmationResult = confirmationResult;
+      reset();
+      setResendCooldown(60);
+      toast.success('New OTP sent! Please enter the new code.');
+    } catch (e: any) {
+      toast.error(e.message || 'Resend failed');
+      if ((window as any).modalRecaptchaVerifier) {
+        try { (window as any).modalRecaptchaVerifier.clear(); } catch {}
+        (window as any).modalRecaptchaVerifier = undefined;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const maskedPhone = phone.length <= 4 ? '****' : phone.slice(0, 4) + '****' + phone.slice(-2);
+
+  return (
+    <div className={s.verifyCenter}>
+      {isSignup && (
+        <div style={{ marginBottom: '16px', textAlign: 'left', backgroundColor: tokens.colorBrandBackground2, padding: '12px', borderRadius: '8px' }}>
+          <Text style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Step 2 of 2</Text>
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', listStyle: 'none' }}>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '6px', color: tokens.colorPaletteGreenForeground1 }}>
+              <CheckmarkCircle24Filled />
+              Email Verified
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', color: tokens.colorBrandForeground1, fontWeight: 600 }}>
+              <PhoneRegular />
+              Verify Phone (current)
+            </li>
+          </ul>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', justifyContent: 'center' }}>
+        <PhoneRegular />
+        <Text style={{ fontSize: '13px' }}>Code sent to <strong>{maskedPhone}</strong></Text>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className={s.verifyForm}>
+        <div className={s.inputGroup}>
+          <label htmlFor="modal-otp" className={s.label}>Verification code</label>
+          <Input id="modal-otp" type="text" maxLength={6} placeholder="000000" autoComplete="one-time-code" {...register('code')} />
+          {errors.code && <span className={s.fieldError} role="alert">{errors.code.message}</span>}
+        </div>
+        <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
+          {loading ? 'Verifying\u2026' : 'Verify Phone'}
+        </Button>
+        <Button appearance="secondary" onClick={onResend} disabled={resendCooldown > 0 || loading} style={{ width: '100%' }}>
+          {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend Phone OTP'}
+        </Button>
+      </form>
+
+      <div className={s.switchRow}>
+        <button type="button" className={s.link} onClick={onBack}>
+          {isSignup ? 'Cancel and start over' : '\u2190 Back to Login'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---- Main Modal ----
 
 export function AuthModal() {
   const { open, closeModal, onAuthSuccess } = useAuthModal();
   const s = useStyles();
+  const dispatch = useAppDispatch();
   const [view, setView] = useState<ModalView>('login');
-  const [verifyState, setVerifyState] = useState<VerifyState | null>(null);
+  const [pendingData, setPendingData] = useState<PendingSignup | null>(null);
+  const [loginPhone, setLoginPhone] = useState('');
+  const signupFinalizedRef = useRef(false);
 
-  const resetState = useCallback(() => {
+  const cleanupAndReset = useCallback(async () => {
+    if ((window as any).pendingSignupData && !signupFinalizedRef.current) {
+      const user = auth.currentUser;
+      if (user) {
+        try { await deleteUser(user); } catch {}
+      }
+      (window as any).pendingSignupData = null;
+    }
+    setPendingData(null);
+    setLoginPhone('');
     setView('login');
-    setVerifyState(null);
-    (window as any).pendingSignupData = null; // Clear any partial signup data
+    signupFinalizedRef.current = false;
   }, []);
 
   const handleOpenChange = useCallback((_e: unknown, data: { open: boolean }) => {
     if (!data.open) {
       closeModal();
-      resetState();
+      cleanupAndReset();
     }
-  }, [closeModal, resetState]);
+  }, [closeModal, cleanupAndReset]);
 
-  const handleAuthSuccess = useCallback(() => {
-    resetState();
+  const handleAuthSuccess = useCallback(async () => {
+    signupFinalizedRef.current = true;
+    (window as any).pendingSignupData = null;
+    await dispatch(fetchUser());
+    setPendingData(null);
+    setLoginPhone('');
+    setView('login');
     onAuthSuccess();
-  }, [resetState, onAuthSuccess]);
+  }, [onAuthSuccess, dispatch]);
 
-  const goToVerify = useCallback((state: VerifyState) => {
-    if (state.target === 'success') {
-      handleAuthSuccess();
-    } else {
-      setVerifyState(state);
-      setView('verify');
+  // SignupView → email verified → send phone OTP → verify-phone
+  const handleEmailVerified = useCallback(async () => {
+    if (!pendingData || !auth.currentUser) return;
+    try {
+      if ((window as any).modalRecaptchaVerifier) {
+        try { (window as any).modalRecaptchaVerifier.clear(); } catch {}
+        (window as any).modalRecaptchaVerifier = undefined;
+      }
+      (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', { size: 'invisible' });
+      await auth.currentUser.getIdToken(true);
+      const confirmationResult = await linkWithPhoneNumber(auth.currentUser, pendingData.phone, (window as any).modalRecaptchaVerifier);
+      (window as any).confirmationResult = confirmationResult;
+      setView('verify-phone');
+      toast.success('OTP sent to your phone!');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to send phone OTP.');
     }
-  }, [handleAuthSuccess]);
+  }, [pendingData]);
 
-  const title = view === 'login' ? 'Welcome Back' : view === 'signup' ? 'Create Account' : 'Verify Your Account';
-  const subtitle = view === 'login'
-    ? 'Please login to continue'
-    : view === 'signup'
-      ? 'Enter your details to sign up'
-      : '';
+  const title =
+    view === 'login' ? 'Welcome Back'
+    : view === 'signup' ? 'Create Account'
+    : view === 'verify-email' ? 'Verify Email'
+    : 'Verify Phone';
+
+  const subtitle =
+    view === 'login' ? 'Please login to continue'
+    : view === 'signup' ? 'Enter your details to sign up'
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} modalType="modal">
@@ -766,7 +833,7 @@ export function AuthModal() {
             <Button
               appearance="subtle"
               icon={<Dismiss24Regular />}
-              onClick={() => { closeModal(); resetState(); }}
+              onClick={async () => { closeModal(); await cleanupAndReset(); }}
               aria-label="Close"
               size="small"
             />
@@ -774,25 +841,49 @@ export function AuthModal() {
           {subtitle && <Text className={s.subtitle}>{subtitle}</Text>}
           <DialogContent style={{ padding: 0 }}>
             <div id="modal-recaptcha"></div>
+
             {view === 'login' && (
               <LoginView
                 onSwitchToSignup={() => setView('signup')}
-                onVerify={goToVerify}
+                onLoginSuccess={handleAuthSuccess}
+                onPhoneOtp={(phone) => { setLoginPhone(phone); setView('verify-login-otp'); }}
                 styles={s}
               />
             )}
+
             {view === 'signup' && (
               <SignupView
                 onSwitchToLogin={() => setView('login')}
-                onVerify={goToVerify}
+                onEmailVerify={(data) => { setPendingData(data); setView('verify-email'); }}
                 styles={s}
               />
             )}
-            {view === 'verify' && verifyState && (
-              <VerifyView
-                verifyState={verifyState}
-                onBack={resetState}
+
+            {view === 'verify-email' && pendingData && (
+              <VerifyEmailView
+                pendingData={pendingData}
+                onEmailVerified={handleEmailVerified}
+                onCancel={cleanupAndReset}
+                styles={s}
+              />
+            )}
+
+            {view === 'verify-phone' && pendingData && (
+              <VerifyPhoneView
+                phone={pendingData.phone}
+                isSignup={true}
                 onSuccess={handleAuthSuccess}
+                onBack={cleanupAndReset}
+                styles={s}
+              />
+            )}
+
+            {view === 'verify-login-otp' && (
+              <VerifyPhoneView
+                phone={loginPhone}
+                isSignup={false}
+                onSuccess={handleAuthSuccess}
+                onBack={cleanupAndReset}
                 styles={s}
               />
             )}

@@ -4,24 +4,16 @@
  */
 
 export { request } from './client';
-export { authApi, getGoogleAuthUrl } from './auth';
+export { authApi } from './auth';
 export { draftingApi } from './drafting';
 export type {
-  SignupOtpChannel,
   SignupPayload,
-  LoginPayload,
-  RequestOtpPayload,
-  VerifyOtpPayload,
-  VerifySignupPayload,
-  ForgotPasswordPayload,
-  ResetPasswordPayload,
   DraftType,
   FormFieldOption,
   FormField,
   FormSchema,
 } from './types';
 
-// Single api object for backward compatibility (auth + drafting)
 import { authApi } from './auth';
 import { draftingApi } from './drafting';
 

@@ -14,6 +14,8 @@ import {
 import { usePageStyles } from './authStyles';
 import { auth } from '../../lib/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { fetchUser } from '../../store/slices/authSlice';
+import { useAppDispatch } from '../../store/hooks';
 
 declare global {
   interface Window {
@@ -29,6 +31,7 @@ const verifySchema = z.object({
 export function VerifyOtpPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const p = usePageStyles();
 
   const state = location.state as {
@@ -65,7 +68,8 @@ export function VerifyOtpPage() {
       if (!cr) throw new Error('No active verification session.');
       await cr.confirm(data.code);
       toast.success('Signed in.');
-      navigate('/account', { replace: true });
+      await dispatch(fetchUser());
+      navigate('/', { replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Invalid or expired code(s)');
     } finally {
