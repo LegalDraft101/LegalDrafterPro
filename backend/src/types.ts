@@ -61,6 +61,15 @@ export interface VerifyOtpBody {
   code: string;
 }
 
+export interface VerifySignupBody {
+  name: string;
+  email: string;
+  phone: string;
+  password?: string;
+  emailCode: string;
+  phoneCode: string;
+}
+
 export interface ApiUser {
   id: string;
   name: string;

@@ -11,36 +11,46 @@ import {
   Title2,
   Text,
 } from '@fluentui/react-components';
-import { useAuth } from '../../hooks/useAuth';
-import { api } from '../../api/index';
 import { usePageStyles } from './authStyles';
+import { auth } from '../../lib/firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+    confirmationResult?: ConfirmationResult;
+  }
+}
 
 const verifySchema = z.object({
-  code: z.string().length(6, 'Enter 6-digit code').regex(/^\d{6}$/, 'Digits only'),
+  code: z.string().trim().length(6, 'Enter 6-digit code'),
 });
 
 export function VerifyOtpPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setUser } = useAuth();
   const p = usePageStyles();
-  const state = location.state as { emailOrPhone?: string; channel?: 'email' | 'phone'; email?: string; phone?: string } | null;
+
+  const state = location.state as {
+    phone?: string;
+  } | null;
+
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const channel = state?.channel ?? (state?.emailOrPhone?.includes('@') ? 'email' : 'phone');
-  const email = state?.email ?? (channel === 'email' ? state?.emailOrPhone : undefined);
-  const phone = state?.phone ?? (channel === 'phone' ? state?.emailOrPhone : undefined);
-  const target = email ?? phone ?? '';
-  const { register, handleSubmit, formState: { errors }, setFocus } = useForm<z.infer<typeof verifySchema>>({ resolver: zodResolver(verifySchema) });
+  const [resendCooldown, setResendCooldown] = useState(60);
+
+  const phone = state?.phone ?? '';
+
+  const { register, handleSubmit, formState: { errors }, setFocus } = useForm<z.infer<typeof verifySchema>>({
+    resolver: zodResolver(verifySchema),
+    defaultValues: { code: '' }
+  });
 
   useEffect(() => {
-    if (!target) {
-      toast.error('Missing email or phone. Start from login or signup.');
+    if (!phone || !(window as any).confirmationResult) {
+      toast.error('Missing phone connection. Start from login.');
       navigate('/login');
-      return;
     }
-    setResendCooldown(60);
-  }, [target, navigate]);
+  }, [phone, navigate]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -51,17 +61,13 @@ export function VerifyOtpPage() {
   const onSubmit = async (data: z.infer<typeof verifySchema>) => {
     setLoading(true);
     try {
-      const res = await api.verifyOtp({
-        channel,
-        email: channel === 'email' ? target : undefined,
-        phone: channel === 'phone' ? target : undefined,
-        code: data.code,
-      });
-      if (res.user) { setUser(res.user); } else { const me = await api.me(); setUser(me); }
+      const cr = (window as any).confirmationResult;
+      if (!cr) throw new Error('No active verification session.');
+      await cr.confirm(data.code);
       toast.success('Signed in.');
       navigate('/account', { replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Invalid or expired code');
+      toast.error(e instanceof Error ? e.message : 'Invalid or expired code(s)');
     } finally {
       setLoading(false);
     }
@@ -71,29 +77,41 @@ export function VerifyOtpPage() {
     if (resendCooldown > 0) return;
     setLoading(true);
     try {
-      await api.requestOtp({ channel, email: channel === 'email' ? target : undefined, phone: channel === 'phone' ? target : undefined });
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'resend-recaptcha', { size: 'invisible' });
+      }
+      const confirmationResult = await signInWithPhoneNumber(auth, phone, (window as any).recaptchaVerifier);
+      (window as any).confirmationResult = confirmationResult;
+
       toast.success('Code sent again.');
       setResendCooldown(60);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Resend failed');
+    } catch (e: any) {
+      toast.error(e.message || 'Resend failed');
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.clear();
+        (window as any).recaptchaVerifier = undefined;
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const maskedTarget = target.length <= 4 ? '****' : target.slice(0, 2) + '****' + target.slice(-2);
+  const maskedTarget = phone.length <= 4 ? '****' : phone.slice(0, 2) + '****' + phone.slice(-2);
 
   return (
     <div className={p.verifyWrapper}>
       <Card className={p.verifyCard}>
         <Title2 className={p.verifyHeading}>Verify your account</Title2>
-        <Text className={p.verifySubheading}>We sent a 6-digit code to {maskedTarget}</Text>
+        <Text className={p.verifySubheading}>
+          We sent a 6-digit code to {maskedTarget}
+        </Text>
         <form onSubmit={handleSubmit(onSubmit)} className={p.verifyForm}>
           <div className={p.verifyInputGroup}>
             <label htmlFor="code" style={{ fontSize: 13, fontWeight: 500 }}>Verification code</label>
             <Input id="code" type="text" maxLength={6} placeholder="000000" autoComplete="one-time-code" {...register('code', { onBlur: () => setFocus('code') })} />
             {errors.code && <span role="alert" className={p.verifyError}>{errors.code.message}</span>}
           </div>
+          <div id="resend-recaptcha"></div>
           <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Verifying…' : 'Verify'}
           </Button>

@@ -5,7 +5,8 @@
 import { config } from 'dotenv';
 import type { CorsOptions } from 'cors';
 
-config();
+// Force dotenv to override process.env variables that may be cached by the terminal session
+config({ override: true });
 
 const get = (key: string, defaultValue?: string): string => {
   const v = process.env[key] ?? defaultValue;
@@ -43,6 +44,9 @@ export const env = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? '',
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL ?? `${process.env.ORIGIN ?? 'http://localhost:5173'}/auth/google/callback`,
+  SUPABASE_URL: get('SUPABASE_URL', ''),
+  SUPABASE_SERVICE_ROLE_KEY: get('SUPABASE_SERVICE_ROLE_KEY', ''),
+  DATABASE_URL: get('DATABASE_URL', ''),
 };
 
 export const isProd = env.NODE_ENV === 'production';

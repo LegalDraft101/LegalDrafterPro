@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../../api/auth';
+import { auth } from '../../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 export interface AuthUser {
   id: string;
@@ -54,7 +56,8 @@ export const fetchUser = createAsyncThunk('auth/fetchUser', async (_, { rejectWi
 
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
-    await authApi.logout();
+    await signOut(auth); // Firebase sign out clears local token
+    await authApi.logout(); // Optional: clears any backend session cookie if we still have one
   } catch {
     return rejectWithValue(null);
   }

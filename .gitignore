@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 # Backend
+.env
 backend/.env
 backend/error.log
 backend/file_storage/generated_affidavits/*

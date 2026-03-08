@@ -5,3 +5,5 @@ data/drafts/submissions/
 data/drafts/documents/
 data/drafts/uploads/
 file_storage/generated_affidavits/*.pdf
+.env.example
+legaldrafterpro-17112-firebase-adminsdk-fbsvc-dde9c7d988.json

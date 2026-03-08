@@ -12,7 +12,7 @@ const AuthModalContext = createContext<AuthModalContextValue | null>(null);
 
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const onSuccessRef = useRef<(() => void) | undefined>();
+  const onSuccessRef = useRef<(() => void) | undefined>(undefined);
 
   const requireAuth = useCallback((onSuccess?: () => void) => {
     onSuccessRef.current = onSuccess;

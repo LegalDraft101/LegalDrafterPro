@@ -1,9 +1,13 @@
-import { initPassport } from './services';
 import app from './app';
 import { env } from './config';
+import { initDb } from './utils/initDb';
 
-initPassport();
+async function bootstrap() {
+  await initDb();
 
-app.listen(env.PORT, () => {
-  console.log(`API listening on http://localhost:${env.PORT}`);
-});
+  app.listen(env.PORT, () => {
+    console.log(`API listening on http://localhost:${env.PORT}`);
+  });
+}
+
+bootstrap();

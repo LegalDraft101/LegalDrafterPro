@@ -19,7 +19,6 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const TECHNICAL_EMAIL_REGEX = /^[^\s@]+@[^\s@]+$/;
 const E164_REGEX = /^\+[1-9]\d{1,14}$/;
 const INVISIBLE_REGEX = /[\u200B-\u200D\uFEFF]/g;
-const PASSWORD_REGEX = /^[a-zA-Z0-9]+$/;
 
 export function generateOtp(length: number): string {
   const digits: string[] = [];
@@ -98,7 +97,6 @@ export function isValidPassword(s: string): boolean {
   if (typeof s !== 'string') return false;
   const t = stripInvisible(s);
   if (t.length < 8) return false;
-  if (!PASSWORD_REGEX.test(t)) return false;
   if (!/[a-z]/.test(t)) return false;
   if (!/[A-Z]/.test(t)) return false;
   if (!/\d/.test(t)) return false;

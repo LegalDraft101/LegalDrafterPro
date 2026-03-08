@@ -1,13 +1,6 @@
 import { Link } from 'react-router-dom';
-import {
-  makeStyles,
-  tokens,
-  Card,
-  Text,
-  Title2,
-  Subtitle2,
-} from '@fluentui/react-components';
 import { siteName } from '../../../constants/content';
+import '../../../pages/auth/Auth.scss';
 
 export function GoogleIcon({ size = 20, className }: { size?: number; className?: string }) {
   return (
@@ -20,125 +13,36 @@ export function GoogleIcon({ size = 20, className }: { size?: number; className?
   );
 }
 
-const useStyles = makeStyles({
-  wrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    padding: '24px',
-    backgroundColor: tokens.colorNeutralBackground2,
-  },
-  card: {
-    display: 'flex',
-    width: '100%',
-    maxWidth: '960px',
-    minHeight: '580px',
-    overflow: 'hidden',
-    borderRadius: '16px',
-    boxShadow: tokens.shadow16,
-    '@media (max-width: 768px)': {
-      flexDirection: 'column',
-      minHeight: 'auto',
-    },
-  },
-  promo: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    padding: '48px 40px',
-    backgroundImage: 'linear-gradient(135deg, #2b6cb0, #4299e1)',
-    color: '#fff',
-    '@media (max-width: 768px)': {
-      padding: '32px 24px',
-    },
-  },
-  promoTitle: {
-    fontSize: '28px',
-    fontWeight: 700,
-    lineHeight: 1.3,
-    margin: '0 0 12px 0',
-  },
-  underline: {
-    textDecoration: 'underline',
-    textDecorationColor: 'rgba(255,255,255,0.5)',
-    textUnderlineOffset: '4px',
-  },
-  promoSub: {
-    fontSize: '14px',
-    lineHeight: 1.6,
-    opacity: 0.85,
-    margin: 0,
-  },
-  formPanel: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '40px 36px',
-    backgroundColor: tokens.colorNeutralBackground1,
-    overflowY: 'auto',
-    '@media (max-width: 768px)': {
-      padding: '28px 20px',
-    },
-  },
-  backLink: {
-    fontSize: '13px',
-    color: tokens.colorBrandForegroundLink,
-    textDecoration: 'none',
-    marginBottom: '20px',
-    ':hover': { textDecoration: 'underline' },
-  },
-  logo: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    textDecoration: 'none',
-    color: 'inherit',
-    marginBottom: '24px',
-    fontWeight: 700,
-    fontSize: '18px',
-  },
-  logoIcon: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '32px',
-    height: '32px',
-    borderRadius: '6px',
-    backgroundColor: '#2b6cb0',
-    color: '#fff',
-    fontWeight: 800,
-    fontSize: '12px',
-  },
-  heading: {
-    margin: '0 0 4px 0',
-  },
-  subheading: {
-    margin: '0 0 24px 0',
-    fontSize: '14px',
-    color: tokens.colorNeutralForeground3,
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  signupPrompt: {
-    fontSize: '13px',
-    textAlign: 'center' as const,
-    marginTop: '20px',
-    color: tokens.colorNeutralForeground3,
-    '& a': {
-      color: tokens.colorBrandForegroundLink,
-      fontWeight: 600,
-      textDecoration: 'none',
-    },
-    '& a:hover': {
-      textDecoration: 'underline',
-    },
-  },
-});
+// Sparkle Icon for the feature list
+function SparkleIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L14.8819 8.12595L21.3725 9.07096L16.6863 13.6341L17.7925 20.103L12 17.0607L6.20752 20.103L7.31375 13.6341L2.62749 9.07096L9.11812 8.12595L12 2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+// Shield Icon
+function ShieldIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Document Icon
+function DocumentIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -159,46 +63,72 @@ export function AuthLayout({
   extra,
   backLink,
 }: AuthLayoutProps) {
-  const classes = useStyles();
-
   return (
-    <div className={classes.wrapper}>
-      <Card className={classes.card}>
-        {showPromo && (
-          <div className={classes.promo}>
-            <div>
-              <h1 className={classes.promoTitle}>
-                Simplify management with our <span className={classes.underline}>dashboard.</span>
-              </h1>
-              <p className={classes.promoSub}>
-                Simplify your e-commerce management with our user-friendly admin dashboard.
-              </p>
+    <div className="auth-container">
+      {showPromo && (
+        <div className="auth-left">
+          <div className="blob blob-1"></div>
+          <div className="blob blob-2"></div>
+          <div className="blob blob-3"></div>
+
+          <div className="brand-content">
+            <Link to="/" className="logo-container" aria-label={`${siteName} home`}>
+              <span className="logo-icon" aria-hidden>LD</span>
+              {siteName}
+            </Link>
+
+            <h1>AI-Powered Legal Drafting</h1>
+            <p>Empower your legal practice with automated drafting, seamless document management, and intelligent insights.</p>
+
+            <div className="feature-list">
+              <div className="feature-item">
+                <SparkleIcon />
+                <span>Smart template generation tailored to your needs.</span>
+              </div>
+              <div className="feature-item">
+                <ShieldIcon />
+                <span>Enterprise-grade security and compliance.</span>
+              </div>
+              <div className="feature-item">
+                <DocumentIcon />
+                <span>Effortless collaboration and document tracking.</span>
+              </div>
             </div>
           </div>
-        )}
-        <div className={classes.formPanel}>
+        </div>
+      )}
+
+      <div className="auth-right">
+        <div className="auth-card">
+          <Link to="/" className="mobile-logo" aria-label={`${siteName} home`}>
+            <span className="logo-icon" aria-hidden>LD</span>
+            {siteName}
+          </Link>
+
           {backLink && (
-            <Link to={backLink.to} className={classes.backLink} aria-label={backLink.label}>
+            <Link to={backLink.to} className="back-link" aria-label={backLink.label}>
               ← {backLink.label}
             </Link>
           )}
-          <Link to="/" className={classes.logo} aria-label={`${siteName} home`}>
-            <span className={classes.logoIcon} aria-hidden>LD</span>
-            {siteName}
-          </Link>
-          <Title2 className={classes.heading}>{title}</Title2>
-          <Subtitle2 className={classes.subheading}>{subtitle}</Subtitle2>
-          <div className={classes.form}>
+
+          <div className="auth-header">
+            <h2>{title}</h2>
+            <p>{subtitle}</p>
+          </div>
+
+          <div className="form">
             {children}
             {extra}
           </div>
+
           {signupPrompt && (
-            <Text className={classes.signupPrompt}>
+            <div className="signup-text">
               {signupPrompt.text} <Link to={signupPrompt.to}>{signupPrompt.linkText}</Link>
-            </Text>
+            </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
+

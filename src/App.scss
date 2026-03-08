@@ -31,3 +31,36 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
+
+/* Global FluentUI Input Fixes for visible text */
+.fui-Input input {
+  color: #1a202c !important;
+  /* Force dark text explicitly to override any bleeding themes */
+  caret-color: #000 !important;
+}
+
+.fui-Input input::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+.dark-mode .fui-Input input {
+  color: #f1f5f9 !important;
+  /* Force light text in dark mode if inputs are dark */
+  caret-color: #fff !important;
+}
+
+.dark-mode .fui-Input input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Fix FluentUI Radio labels text color */
+.fui-Radio label,
+.fui-Radio span {
+  color: #0f172a !important;
+}
+
+.dark-mode .fui-Radio label,
+.dark-mode .fui-Radio span {
+  color: #f1f5f9 !important;
+}

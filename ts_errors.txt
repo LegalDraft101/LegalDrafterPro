@@ -1,0 +1,84 @@
+src/components/features/AuthModal/AuthModal.tsx(16,3): error TS6133: 'RadioGroup' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(17,3): error TS6133: 'Radio' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(26,10): error TS2300: Duplicate identifier 'GoogleIcon'.
+src/components/features/AuthModal/AuthModal.tsx(37,10): error TS2300: Duplicate identifier 'GoogleIcon'.
+src/components/features/AuthModal/AuthModal.tsx(230,9): error TS6133: 'emailOrPhoneValue' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(370,10): error TS6133: 'otpChannel' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(370,22): error TS6133: 'setOtpChannel' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(370,48): error TS2304: Cannot find name 'SignupOtpChannel'.
+src/components/features/AuthModal/AuthModal.tsx(492,9): error TS6133: 'setUser' is declared but its value is never read.
+src/components/features/AuthModal/AuthModal.tsx(593,7): error TS2448: Block-scoped variable 'handleAuthSuccess' used before its declaration.
+src/components/features/AuthModal/AuthModal.tsx(593,7): error TS2454: Variable 'handleAuthSuccess' is used before being assigned.
+src/components/features/AuthModal/AuthModalContext.tsx(15,24): error TS2554: Expected 1 arguments, but got 0.
+src/components/layout/Footer/Footer.tsx(2,34): error TS6133: 'tokens' is declared but its value is never read.
+src/components/layout/Footer/Footer.tsx(108,7): error TS2322: Type 'string' is not assignable to type 'undefined'.
+src/components/layout/Navbar/Navbar.tsx(6,3): error TS6133: 'tokens' is declared but its value is never read.
+src/components/layout/Navbar/Navbar.tsx(8,3): error TS6133: 'Text' is declared but its value is never read.
+src/components/layout/Navbar/Navbar.tsx(141,7): error TS2322: Type 'string' is not assignable to type 'undefined'.
+src/pages/AffidavitForm/AffidavitForm.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/AffidavitForm/AffidavitForm.tsx(21,25): error TS2554: Expected 1 arguments, but got 0.
+src/pages/AffidavitForm/AffidavitForm.tsx(37,12): error TS6133: 'draftHandled' is declared but its value is never read.
+src/pages/AffidavitForm/AffidavitForm.tsx(55,38): error TS2345: Argument of type 'BlockerBlocked' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type 'BlockerBlocked' provides no match for the signature '(prevState: null): null'.
+src/pages/AffidavitForm/AffidavitForm.tsx(64,37): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(82,50): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(83,25): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(115,24): error TS2339: Property 'formData' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(117,24): error TS2339: Property 'fields' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(117,39): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(117,46): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(118,57): error TS2339: Property 'formData' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(130,24): error TS2339: Property 'fields' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(130,39): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(130,46): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(142,45): error TS2339: Property 'proceed' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(149,45): error TS2339: Property 'proceed' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(154,28): error TS2339: Property 'reset' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(160,36): error TS2353: Object literal may only specify known properties, and 'proceed' does not exist in type '(prevState: null) => null'.
+src/pages/AffidavitForm/AffidavitForm.tsx(167,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(167,35): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(176,13): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(179,24): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(189,9): error TS18047: 'formatData' is possibly 'null'.
+src/pages/AffidavitForm/AffidavitForm.tsx(189,35): error TS7006: Parameter 'field' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(190,25): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(193,17): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(197,21): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(203,21): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(227,40): error TS2339: Property 'content' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(231,41): error TS2339: Property 'content' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(239,32): error TS7006: Parameter 'paragraph' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(239,43): error TS7006: Parameter 'pIdx' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(248,33): error TS7006: Parameter 'part' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(248,39): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(250,54): error TS2339: Property 'fields' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(253,42): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(256,47): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(271,41): error TS2339: Property 'title' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(281,24): error TS2345: Argument of type '{ margin: number; filename: string; image: { type: string; quality: number; }; html2canvas: { scale: number; }; jsPDF: { unit: string; format: string; orientation: string; }; }' is not assignable to parameter of type 'Html2PdfOptions'.
+  The types of 'image.type' are incompatible between these types.
+    Type 'string' is not assignable to type '"jpeg" | "png" | "webp" | undefined'.
+src/pages/AffidavitForm/AffidavitForm.tsx(281,34): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | HTMLElement | HTMLCanvasElement | HTMLImageElement'.
+src/pages/AffidavitForm/AffidavitForm.tsx(284,50): error TS2345: Argument of type '{ margin: number; filename: string; image: { type: string; quality: number; }; html2canvas: { scale: number; }; jsPDF: { unit: string; format: string; orientation: string; }; }' is not assignable to parameter of type 'Html2PdfOptions'.
+  The types of 'image.type' are incompatible between these types.
+    Type 'string' is not assignable to type '"jpeg" | "png" | "webp" | undefined'.
+src/pages/AffidavitForm/AffidavitForm.tsx(284,60): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | HTMLElement | HTMLCanvasElement | HTMLImageElement'.
+src/pages/AffidavitForm/AffidavitForm.tsx(332,57): error TS2322: Type 'RefObject<unknown>' is not assignable to type 'Ref<HTMLDivElement> | undefined'.
+  Type 'RefObject<unknown>' is not assignable to type 'RefObject<HTMLDivElement | null>'.
+    Type 'unknown' is not assignable to type 'HTMLDivElement | null'.
+src/pages/AffidavitForm/AffidavitForm.tsx(365,72): error TS2339: Property 'title' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(366,61): error TS2339: Property 'description' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(373,37): error TS2339: Property 'fields' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(373,49): error TS7006: Parameter 'field' implicitly has an 'any' type.
+src/pages/AffidavitForm/AffidavitForm.tsx(379,52): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(380,50): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(385,48): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(390,41): error TS2322: Type '"outline" | "underline"' is not assignable to type '"outline" | "filled-darker" | "filled-lighter" | "filled-darker-shadow" | "filled-lighter-shadow" | undefined'.
+  Type '"underline"' is not assignable to type '"outline" | "filled-darker" | "filled-lighter" | "filled-darker-shadow" | "filled-lighter-shadow" | undefined'.
+src/pages/AffidavitForm/AffidavitForm.tsx(390,53): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(396,48): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(400,53): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/pages/AffidavitForm/AffidavitForm.tsx(434,45): error TS2339: Property 'savedAt' does not exist on type 'never'.
+src/pages/AffidavitForm/AffidavitForm.tsx(434,74): error TS2339: Property 'savedAt' does not exist on type 'never'.
+src/pages/auth/LoginPage.tsx(15,1): error TS6133: 'api' is declared but its value is never read.
+src/pages/auth/SignupPage.tsx(46,11): error TS6133: 'start' is declared but its value is never read.

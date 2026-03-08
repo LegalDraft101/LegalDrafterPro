@@ -4,9 +4,9 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
-import { verifyAccessToken } from '../utils';
-import { findUserById } from '../services';
+import { findUserById, findUserByEmail, findUserByPhone } from '../services';
 import type { JwtPayload } from '../types';
+import { adminAuth } from '../firebase';
 
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -16,13 +16,7 @@ export const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export const otpRequestLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
-  message: { error: 'Too many OTP requests' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,28 +31,70 @@ export interface AuthRequest extends Request {
 }
 
 export async function authGuard(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
-  const token = req.cookies?.accessToken ?? req.cookies?.access_token;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Unauthorized: No token provided' });
+    return;
+  }
+
+  const token = authHeader.split('Bearer ')[1];
   if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
-  const payload = verifyAccessToken(token);
-  if (!payload) {
-    res.status(401).json({ error: 'Unauthorized' });
+
+  if (!adminAuth) {
+    res.status(500).json({ error: 'Firebase Admin SDK not initialized' });
     return;
   }
-  const user = await findUserById(payload.sub);
-  if (!user) {
-    res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(token);
+
+    // Find matching user in our Supabase DB
+    let user = null;
+    if (decodedToken.email) {
+      user = await findUserByEmail(decodedToken.email);
+    } else if (decodedToken.phone_number) {
+      user = await findUserByPhone(decodedToken.phone_number);
+    }
+
+    if (!user) {
+      if (req.path === '/signup') {
+        // If it's a signup request, we allow it to pass even without a user in the DB.
+        // We attach the verified Firebase token info so the controller can use it.
+        req.user = {
+          sub: decodedToken.uid, // Firebase UID
+          tokenVersion: 1, // Default
+          name: '',
+          phone: decodedToken.phone_number || '',
+          email: decodedToken.email || '',
+          iat: decodedToken.iat,
+          exp: decodedToken.exp
+        };
+        // We intercept the req object to pass decoded token for exact verifications
+        (req as any).firebaseUser = decodedToken;
+        return next();
+      }
+      res.status(401).json({ error: 'Unauthorized: User not found in database' });
+      return;
+    }
+
+    req.user = {
+      sub: user.id,
+      tokenVersion: user.tokenVersion,
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      iat: decodedToken.iat,
+      exp: decodedToken.exp
+    };
+    next();
+  } catch (error) {
+    console.error('Firebase token verification error', error);
+    res.status(401).json({ error: 'Unauthorized: Invalid token' });
     return;
   }
-  const tokenVersion = user.tokenVersion ?? 0;
-  if ((payload.tokenVersion ?? 0) !== tokenVersion) {
-    res.status(401).json({ error: 'Session expired. Please sign in again.' });
-    return;
-  }
-  req.user = { ...payload, name: user.name, phone: user.phone };
-  next();
 }
 
 export function maskForLog(value: unknown): string {

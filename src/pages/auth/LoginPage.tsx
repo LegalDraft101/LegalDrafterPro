@@ -7,15 +7,21 @@ import { toast } from 'sonner';
 import {
   Button,
   Input,
-  Divider,
   MessageBar,
   MessageBarBody,
 } from '@fluentui/react-components';
 import { EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
 import { AuthLayout, GoogleIcon } from '../../components/common/Shared/Shared';
-import { api, getGoogleAuthUrl } from '../../api/index';
 import { emailSchema, isEmailTechnicallyCorrect, passwordSchema } from '../../lib/validation';
 import { useAuthFormStyles } from './authStyles';
+import { auth } from '../../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
+
+declare global {
+  interface Window {
+    confirmationResult?: ConfirmationResult;
+  }
+}
 
 const loginSchema = z.object({
   emailOrPhone: z.string().trim().min(1, 'Add a valid email address').refine(
@@ -33,8 +39,12 @@ const loginSchema = z.object({
   ),
 });
 
+import { fetchUser } from '../../store/slices/authSlice';
+import { useAppDispatch } from '../../store/hooks';
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -61,19 +71,49 @@ export function LoginPage() {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     setLoading(true);
-    const start = Date.now();
     try {
       const trimmed = data.emailOrPhone.trim();
       const isEmail = trimmed.includes('@');
-      const normalized = isEmail ? trimmed : (trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed);
-      await api.login({ emailOrPhone: normalized });
-      toast.success('If an account exists, you will receive a code.');
-      navigate('/verify', { state: { emailOrPhone: normalized, channel: isEmail ? 'email' : 'phone', email: isEmail ? normalized : undefined, phone: isEmail ? undefined : normalized } });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Request failed';
-      toast.error(msg.toLowerCase().includes('invalid input') ? 'Invalid email' : msg);
+
+      if (isEmail) {
+        if (!data.password) {
+          toast.error('Password is required for email login.');
+          setLoading(false);
+          return;
+        }
+        await signInWithEmailAndPassword(auth, trimmed.toLowerCase(), data.password);
+
+        setTimeout(async () => {
+          await dispatch(fetchUser());
+          toast.success('Logged in successfully!');
+          navigate('/');
+        }, 500);
+      } else {
+        // Phone Auth
+        const normalized = trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed;
+
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+          });
+        }
+
+        const confirmationResult = await signInWithPhoneNumber(auth, normalized, window.recaptchaVerifier);
+        window.confirmationResult = confirmationResult;
+
+        toast.success('OTP sent to your phone.');
+        navigate('/verify', { state: { channel: 'phone', phone: normalized } });
+      }
+    } catch (e: any) {
+      const msg = e.message || 'Login failed';
+      toast.error(msg);
+      // clean up recaptcha on error so they can try again
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = undefined;
+      }
     } finally {
-      setTimeout(() => setLoading(false), Math.max(0, 2000 - (Date.now() - start)));
+      setLoading(false);
     }
   };
 
@@ -82,12 +122,17 @@ export function LoginPage() {
     handleSubmit(onSubmit, () => toast.error('Please fix the errors below.'))(e);
   };
 
-  const handleGoogle = (e: React.MouseEvent) => {
+  const handleGoogle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = getGoogleAuthUrl();
-    if (!url) { toast.error('Cannot redirect. Try again.'); return; }
-    window.location.href = url;
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast.success('Logged in with Google!');
+      navigate('/');
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign-in failed. Try again.');
+    }
   };
 
   return (
@@ -108,11 +153,12 @@ export function LoginPage() {
               <MessageBarBody>Google sign-in failed. Try again or use email/phone below.</MessageBarBody>
             </MessageBar>
           )}
-          <Divider style={{ margin: '16px 0' }}>Or Login with</Divider>
+          <div className="divider">Or Login with</div>
           <div className={s.socialRow}>
-            <Button appearance="outline" icon={<GoogleIcon size={18} />} onClick={handleGoogle} aria-label="Login with Google">
-              Google
-            </Button>
+            <button type="button" className="google-btn" onClick={handleGoogle} aria-label="Login with Google">
+              <GoogleIcon size={18} />
+              Continue with Google
+            </button>
           </div>
         </>
       }
@@ -168,6 +214,7 @@ export function LoginPage() {
           <Link to="/forgot-password" className={s.forgotLink}>Forgot password?</Link>
         </div>
         <div className={s.submitRow}>
+          <div id="recaptcha-container"></div>
           <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Sending…' : 'Login'}
           </Button>

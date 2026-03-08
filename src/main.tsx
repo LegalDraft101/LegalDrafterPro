@@ -9,7 +9,7 @@ import App from './App';
 import Home from './pages/Home/Home';
 import Affidavit from './pages/Affidavit/Affidavit';
 import AffidavitForm from './pages/AffidavitForm/AffidavitForm';
-import { SignupPage, LoginPage, ForgotPasswordPage, VerifyOtpPage, AccountPage } from './pages/auth';
+import { SignupPage, LoginPage, ForgotPasswordPage, VerifyOtpPage, AccountPage, VerifyEmailPage } from './pages/auth';
 import RentAgreement from './pages/RentAgreement/RentAgreement';
 import RentAgreementForm from './pages/RentAgreementForm/RentAgreementForm';
 import { PrivacyPage } from './pages/Privacy/Privacy';
@@ -28,6 +28,7 @@ const router = createBrowserRouter(
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/verify" element={<VerifyOtpPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/account" element={<AccountPage />} />
       <Route path="/rent-agreement" element={<RentAgreement />} />
       <Route path="/rent-agreement/:formatId" element={<RentAgreementForm />} />

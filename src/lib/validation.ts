@@ -36,7 +36,7 @@ export const passwordSchema = z
   .min(8, 'Minimum 8 characters')
   .max(128, 'Password must have uppercase, lowercase and a number')
   .refine(
-    (s) => /^[a-zA-Z0-9]+$/.test(s) && /[a-z]/.test(s) && /[A-Z]/.test(s) && /\d/.test(s),
+    (s) => /[a-z]/.test(s) && /[A-Z]/.test(s) && /\d/.test(s),
     'Password must have uppercase, lowercase and a number'
   );
 

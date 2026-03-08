@@ -4,13 +4,11 @@ import type {
   LoginPayload,
   RequestOtpPayload,
   VerifyOtpPayload,
-  ForgotPasswordPayload,
-  ResetPasswordPayload,
 } from './types';
 
 export const authApi = {
   signup: (body: SignupPayload) =>
-    request<{ status: string; next: string }>('/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
+    request<{ status: string; user?: { id: string; name: string; email: string; phone: string } }>('/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
 
   login: (body: LoginPayload) =>
     request<{ status: string; message?: string }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
@@ -23,18 +21,6 @@ export const authApi = {
       '/auth/verify-otp',
       { method: 'POST', body: JSON.stringify(body) }
     ),
-
-  forgotPassword: (body: ForgotPasswordPayload) =>
-    request<{ status: string; message?: string }>('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
-
-  resetPassword: (body: ResetPasswordPayload) =>
-    request<{ status: string; message?: string }>('/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
 
   me: () =>
     request<{ id: string; name: string; email: string; phone: string } | null>('/auth/me', { allow401: true }),

@@ -12,6 +12,7 @@ export type {
   LoginPayload,
   RequestOtpPayload,
   VerifyOtpPayload,
+  VerifySignupPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
   DraftType,

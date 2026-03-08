@@ -13,16 +13,22 @@ import {
   Input,
   Text,
   Divider,
-  RadioGroup,
-  Radio,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
 import { Dismiss24Regular, EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
 import { useAuthModal } from './AuthModalContext';
-import { useAuth } from '../../../hooks/useAuth';
-import { api, getGoogleAuthUrl } from '../../../api/index';
-import type { SignupOtpChannel } from '../../../api/types';
+import { api } from '../../../api/index';
+import { auth } from '../../../lib/firebase';
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
 import { emailSchema, passwordSchema, isEmailTechnicallyCorrect } from '../../../lib/validation';
 import { GoogleIcon } from '../../common/Shared/Shared';
 
@@ -202,6 +208,9 @@ const useStyles = makeStyles({
 
 // ---- Sub-views ----
 
+import { fetchUser } from '../../../store/slices/authSlice';
+import { useAppDispatch } from '../../../store/hooks';
+
 function LoginView({
   onSwitchToSignup,
   onVerify,
@@ -213,45 +222,75 @@ function LoginView({
 }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useAppDispatch();
   const { register, handleSubmit, clearErrors, watch, formState: { errors } } = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
   });
-  const emailOrPhoneValue = watch('emailOrPhone', '');
   const passwordValue = watch('password', '');
   void isEmailTechnicallyCorrect;
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     setLoading(true);
-    const start = Date.now();
     try {
       const trimmed = data.emailOrPhone.trim();
       const isEmail = trimmed.includes('@');
-      const normalized = isEmail
-        ? trimmed
-        : (trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed);
-      await api.login({ emailOrPhone: normalized });
-      toast.success('If an account exists, you will receive a code.');
-      onVerify({
-        channel: isEmail ? 'email' : 'phone',
-        email: isEmail ? normalized : undefined,
-        phone: isEmail ? undefined : normalized,
-        target: normalized,
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Request failed';
-      toast.error(msg.toLowerCase().includes('invalid input') ? 'Invalid email' : msg);
+
+      if (isEmail) {
+        if (!data.password) {
+          toast.error('Password is required for email login.');
+          setLoading(false);
+          return;
+        }
+        await signInWithEmailAndPassword(auth, trimmed.toLowerCase(), data.password);
+
+        // Wait a tiny bit for the auth state token to be registered in axios interceptors
+        setTimeout(async () => {
+          await dispatch(fetchUser());
+          toast.success('Logged in successfully!');
+          onVerify({ channel: 'email', target: 'success' });
+        }, 500);
+      } else {
+        const normalized = trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed;
+
+        if (!(window as any).modalRecaptchaVerifier) {
+          (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', {
+            size: 'invisible',
+          });
+        }
+
+        const confirmationResult = await signInWithPhoneNumber(auth, normalized, (window as any).modalRecaptchaVerifier);
+        (window as any).confirmationResult = confirmationResult;
+
+        toast.success('OTP sent to your phone.');
+        onVerify({
+          channel: 'phone',
+          phone: normalized,
+          target: normalized,
+        });
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Login failed');
+      if ((window as any).modalRecaptchaVerifier) {
+        (window as any).modalRecaptchaVerifier.clear();
+        (window as any).modalRecaptchaVerifier = undefined;
+      }
     } finally {
-      setTimeout(() => setLoading(false), Math.max(0, 2000 - (Date.now() - start)));
+      setLoading(false);
     }
   };
 
-  const handleGoogle = (e: React.MouseEvent) => {
+  const handleGoogle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = getGoogleAuthUrl();
-    if (!url) { toast.error('Cannot redirect. Try again.'); return; }
-    window.location.href = url;
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast.success('Logged in with Google!');
+      onVerify({ channel: 'email', target: 'success' }); // trigger success 
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign-in failed.');
+    }
   };
 
   return (
@@ -330,7 +369,6 @@ function SignupView({
   styles: ReturnType<typeof useStyles>;
 }) {
   const [loading, setLoading] = useState(false);
-  const [otpChannel, setOtpChannel] = useState<SignupOtpChannel>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, handleSubmit, clearErrors, setError, formState: { errors } } = useForm<z.infer<typeof signupSchema>>({
@@ -344,36 +382,71 @@ function SignupView({
       return;
     }
     setLoading(true);
-    const start = Date.now();
     try {
       const emailVal = data.email.trim().toLowerCase();
       const phoneVal = INDIA_PREFIX + data.phone.replace(/\D/g, '').slice(0, 10);
-      await api.signup({
+
+      // Gracefully handle partial signups where Firebase has the user but DB does not.
+      let userCredential;
+      try {
+        userCredential = await createUserWithEmailAndPassword(auth, emailVal, data.password);
+        try { await updateProfile(userCredential.user, { displayName: data.name.trim() }); } catch (err) { }
+      } catch (fbErr: any) {
+        if (fbErr.code === 'auth/email-already-in-use') {
+          try {
+            // Attempt to login to get the currentUser so they can finish verification
+            userCredential = await signInWithEmailAndPassword(auth, emailVal, data.password);
+          } catch (loginErr: any) {
+            if (loginErr.code === 'auth/wrong-password' || loginErr.code === 'auth/invalid-credential') {
+              throw new Error('This email is already registered with a different password. Please login instead.');
+            }
+            throw loginErr;
+          }
+        } else {
+          throw fbErr;
+        }
+      }
+
+      // We do not immediately call backend api.signup yet, because they need both email and phone verified.
+      // We start the Phone verification flow via Recaptcha and Firebase
+      if (!(window as any).modalRecaptchaVerifier) {
+        (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', {
+          size: 'invisible',
+        });
+      }
+
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneVal, (window as any).modalRecaptchaVerifier);
+      (window as any).confirmationResult = confirmationResult;
+
+      toast.success('Successfully created credentials. Now verifying...', { duration: 3000 });
+
+      // Store info to be sent to backend later
+      (window as any).pendingSignupData = {
         name: data.name.trim(),
         email: emailVal,
         phone: phoneVal,
-        password: data.password,
-        otpChannel,
-      });
-      toast.success(otpChannel === 'phone' ? 'Verification code sent to your phone.' : 'Verification code sent to your email.');
-      const target = otpChannel === 'phone' ? phoneVal : emailVal;
-      onVerify({
-        channel: otpChannel === 'phone' ? 'phone' : 'email',
-        email: emailVal,
-        phone: phoneVal,
-        target,
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Request failed';
-      toast.error(msg.toLowerCase().includes('invalid input') ? 'Invalid email' : msg);
+      };
+
+      onVerify({ channel: 'phone', target: phoneVal });
+    } catch (e: any) {
+      toast.error(e.message || 'Signup failed');
+      if ((window as any).modalRecaptchaVerifier) {
+        (window as any).modalRecaptchaVerifier.clear();
+        (window as any).modalRecaptchaVerifier = undefined;
+      }
     } finally {
-      setTimeout(() => setLoading(false), Math.max(0, 2000 - (Date.now() - start)));
+      setLoading(false);
     }
   };
 
   return (
     <>
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit)(e); }} noValidate>
+        <div className={s.inputGroup}>
+          <Text style={{ fontSize: '11px', color: tokens.colorNeutralForeground3, marginBottom: '8px', padding: '6px', backgroundColor: tokens.colorNeutralBackground3, borderRadius: '4px' }}>
+            <strong>Why do we validate both email and phone?</strong> Due to strict legal documentation requirements, we require both a verified email and phone number before creating your account.
+          </Text>
+        </div>
         <div className={s.inputGroup}>
           <label htmlFor="modal-name" className={s.label}>Name</label>
           <Input id="modal-name" type="text" placeholder="Name" autoComplete="name" {...register('name')} />
@@ -432,21 +505,9 @@ function SignupView({
             ) : errors.confirmPassword ? <span className={s.fieldError} role="alert">{errors.confirmPassword.message}</span> : null}
           </div>
         </div>
-        <div className={s.inputGroup}>
-          <label className={s.label}>Send verification code to</label>
-          <RadioGroup
-            layout="horizontal"
-            value={otpChannel}
-            onChange={(_e, data) => setOtpChannel(data.value as SignupOtpChannel)}
-            className={s.otpChannelRow}
-          >
-            <Radio value="email" label="Email" />
-            <Radio value="phone" label="Phone" />
-          </RadioGroup>
-        </div>
         <div className={s.submitRow}>
           <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Sending\u2026' : 'Send OTP'}
+            {loading ? 'Processing...' : 'Verify Email & Phone'}
           </Button>
         </div>
       </form>
@@ -457,6 +518,10 @@ function SignupView({
     </>
   );
 }
+
+import { sendEmailVerification } from 'firebase/auth';
+
+import { useAuth } from '../../../hooks/useAuth';
 
 function VerifyView({
   verifyState,
@@ -469,12 +534,33 @@ function VerifyView({
   onSuccess: () => void;
   styles: ReturnType<typeof useStyles>;
 }) {
-  const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const { setUser } = useAuth();
+
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
   });
+
+  // Track if this is a first-time signup flow
+  const isSignupFlow = !!(window as any).pendingSignupData;
+
+  useEffect(() => {
+    // Attempt to automatically check email verification status
+    let interval: NodeJS.Timeout;
+    if (isSignupFlow && !emailVerified && auth.currentUser) {
+      interval = setInterval(async () => {
+        await auth.currentUser?.reload();
+        if (auth.currentUser?.emailVerified) {
+          setEmailVerified(true);
+          toast.success("Email verified!");
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isSignupFlow, emailVerified]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -482,45 +568,95 @@ function VerifyView({
     return () => clearInterval(t);
   }, [resendCooldown]);
 
-  const onSubmit = async (data: z.infer<typeof verifySchema>) => {
-    setLoading(true);
+  const finalizeSignup = async () => {
     try {
-      const res = await api.verifyOtp({
-        channel: verifyState.channel,
-        email: verifyState.channel === 'email' ? verifyState.target : undefined,
-        phone: verifyState.channel === 'phone' ? verifyState.target : undefined,
-        code: data.code,
+      setLoading(true);
+      const data = (window as any).pendingSignupData;
+      if (!data) throw new Error("Missing signup data");
+
+      // Token is automatically injected by frontend axios interceptor if auth.currentUser exists
+      // The backend will now verify the Firebase token
+      const res = await api.signup({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
       });
+
       if (res.user) {
         setUser(res.user);
-      } else {
-        const me = await api.me();
-        setUser(me);
       }
-      toast.success('Signed in.');
+
+      toast.success('Account created and verified successfully!');
+      (window as any).pendingSignupData = null; // Clear
       onSuccess();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Invalid or expired code');
+    } catch (e: any) {
+      toast.error(e.message || 'Finalizing backend signup failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const onResend = async () => {
+  // We automatically finalize when both are verified in a signup flow
+  useEffect(() => {
+    if (isSignupFlow && phoneVerified && emailVerified && auth.currentUser) {
+      finalizeSignup();
+    }
+  }, [phoneVerified, emailVerified, isSignupFlow]);
+
+
+  const onSubmit = async (data: z.infer<typeof verifySchema>) => {
+    setLoading(true);
+    try {
+      const cr = (window as any).confirmationResult;
+      if (!cr) throw new Error('No active verification session.');
+      await cr.confirm(data.code);
+      toast.success('Phone verified.');
+      setPhoneVerified(true);
+
+      if (!isSignupFlow) {
+        // Just a standard login flow
+        onSuccess();
+      } else {
+        // If it's signup, we also need to enforce email checking.
+        if (auth.currentUser && !auth.currentUser.emailVerified) {
+          await sendEmailVerification(auth.currentUser);
+          toast.info('Verification link sent to your email. Please click it to continue.');
+        } else if (auth.currentUser && auth.currentUser.emailVerified) {
+          setEmailVerified(true);
+        }
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Invalid or expired code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResendPhone = async () => {
     if (resendCooldown > 0) return;
     setLoading(true);
     try {
-      await api.requestOtp({
-        channel: verifyState.channel,
-        email: verifyState.channel === 'email' ? verifyState.target : undefined,
-        phone: verifyState.channel === 'phone' ? verifyState.target : undefined,
-      });
-      toast.success('Code sent again.');
+      if (!(window as any).modalRecaptchaVerifier) {
+        (window as any).modalRecaptchaVerifier = new RecaptchaVerifier(auth, 'modal-recaptcha', { size: 'invisible' });
+      }
+      const confirmationResult = await signInWithPhoneNumber(auth, verifyState.target, (window as any).modalRecaptchaVerifier);
+      (window as any).confirmationResult = confirmationResult;
+      toast.success('Phone code sent again.');
       setResendCooldown(60);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Resend failed');
+    } catch (e: any) {
+      toast.error(e.message || 'Resend failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onResendEmail = async () => {
+    if (!auth.currentUser) return;
+    try {
+      await sendEmailVerification(auth.currentUser);
+      toast.success('Email verification resent!');
+    } catch (e: any) {
+      toast.error(e.message || 'Could not resend email.');
     }
   };
 
@@ -530,22 +666,50 @@ function VerifyView({
 
   return (
     <div className={s.verifyCenter}>
-      <Text className={s.subtitle}>We sent a 6-digit code to {maskedTarget}</Text>
-      <form onSubmit={handleSubmit(onSubmit)} className={s.verifyForm}>
-        <div className={s.inputGroup}>
-          <label htmlFor="modal-code" className={s.label}>Verification code</label>
-          <Input id="modal-code" type="text" maxLength={6} placeholder="000000" autoComplete="one-time-code" {...register('code')} />
-          {errors.code && <span className={s.fieldError} role="alert">{errors.code.message}</span>}
+      {isSignupFlow && (
+        <div style={{ marginBottom: '16px', textAlign: 'left', backgroundColor: tokens.colorBrandBackground2, padding: '12px', borderRadius: '8px' }}>
+          <Text style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Complete Registration</Text>
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px' }}>
+            <li style={{ color: phoneVerified ? tokens.colorPaletteGreenForeground1 : tokens.colorNeutralForeground1 }}>
+              {phoneVerified ? '✅ Phone Verified' : '⏳ Verify Phone OTP'}
+            </li>
+            <li style={{ color: emailVerified ? tokens.colorPaletteGreenForeground1 : tokens.colorNeutralForeground1, marginTop: '4px' }}>
+              {emailVerified ? '✅ Email Verified' : '⏳ Click verification link sent to email'}
+            </li>
+          </ul>
         </div>
-        <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
-          {loading ? 'Verifying\u2026' : 'Verify'}
-        </Button>
-        <Button appearance="outline" onClick={onResend} disabled={resendCooldown > 0 || loading} style={{ width: '100%' }}>
-          {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
-        </Button>
-      </form>
+      )}
+
+      {(!isSignupFlow || !phoneVerified) && (
+        <>
+          <Text className={s.subtitle}>We sent a 6-digit phone code to {maskedTarget}</Text>
+          <form onSubmit={handleSubmit(onSubmit)} className={s.verifyForm}>
+            <div className={s.inputGroup}>
+              <label htmlFor="modal-code" className={s.label}>Verification code</label>
+              <Input id="modal-code" type="text" maxLength={6} placeholder="000000" autoComplete="one-time-code" disabled={phoneVerified} {...register('code')} />
+              {errors.code && <span className={s.fieldError} role="alert">{errors.code.message}</span>}
+            </div>
+            <Button type="submit" appearance="primary" disabled={loading || phoneVerified} style={{ width: '100%' }}>
+              {loading ? 'Verifying\u2026' : 'Verify Phone'}
+            </Button>
+            <Button appearance="outline" onClick={onResendPhone} disabled={resendCooldown > 0 || loading || phoneVerified} style={{ width: '100%' }}>
+              {resendCooldown > 0 ? `Resend Phone OTP in ${resendCooldown}s` : 'Resend Phone OTP'}
+            </Button>
+          </form>
+        </>
+      )}
+
+      {isSignupFlow && phoneVerified && !emailVerified && (
+        <div style={{ marginTop: '20px' }}>
+          <Text style={{ display: 'block', marginBottom: '12px' }}>Waiting for email verification...</Text>
+          <Button appearance="outline" onClick={onResendEmail} style={{ width: '100%' }}>
+            Resend Verification Email
+          </Button>
+        </div>
+      )}
+
       <div className={s.switchRow}>
-        <button type="button" className={s.link} onClick={onBack}>&larr; Back</button>
+        <button type="button" className={s.link} onClick={onBack}>&larr; Back to Login</button>
       </div>
     </div>
   );
@@ -562,6 +726,7 @@ export function AuthModal() {
   const resetState = useCallback(() => {
     setView('login');
     setVerifyState(null);
+    (window as any).pendingSignupData = null; // Clear any partial signup data
   }, []);
 
   const handleOpenChange = useCallback((_e: unknown, data: { open: boolean }) => {
@@ -571,15 +736,19 @@ export function AuthModal() {
     }
   }, [closeModal, resetState]);
 
-  const goToVerify = useCallback((state: VerifyState) => {
-    setVerifyState(state);
-    setView('verify');
-  }, []);
-
   const handleAuthSuccess = useCallback(() => {
     resetState();
     onAuthSuccess();
   }, [resetState, onAuthSuccess]);
+
+  const goToVerify = useCallback((state: VerifyState) => {
+    if (state.target === 'success') {
+      handleAuthSuccess();
+    } else {
+      setVerifyState(state);
+      setView('verify');
+    }
+  }, [handleAuthSuccess]);
 
   const title = view === 'login' ? 'Welcome Back' : view === 'signup' ? 'Create Account' : 'Verify Your Account';
   const subtitle = view === 'login'
@@ -604,6 +773,7 @@ export function AuthModal() {
           </div>
           {subtitle && <Text className={s.subtitle}>{subtitle}</Text>}
           <DialogContent style={{ padding: 0 }}>
+            <div id="modal-recaptcha"></div>
             {view === 'login' && (
               <LoginView
                 onSwitchToSignup={() => setView('signup')}

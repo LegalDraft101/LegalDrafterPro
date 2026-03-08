@@ -7,14 +7,15 @@ import { toast } from 'sonner';
 import {
   Button,
   Input,
-  RadioGroup,
-  Radio,
 } from '@fluentui/react-components';
 import { EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
 import { AuthLayout } from '../../components/common/Shared/Shared';
-import { api, type SignupOtpChannel } from '../../api/index';
+import { auth } from '../../lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { api } from '../../api/index';
 import { emailSchema, passwordSchema } from '../../lib/validation';
 import { useAuthFormStyles, INDIA_PREFIX } from './authStyles';
+import { useAuth } from '../../hooks/useAuth';
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, 'Name 2–50 characters').max(50, 'Name 2–50 characters'),
@@ -28,8 +29,8 @@ const signupSchema = z.object({
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [otpChannel, setOtpChannel] = useState<SignupOtpChannel>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const s = useAuthFormStyles();
@@ -44,28 +45,70 @@ export function SignupPage() {
       return;
     }
     setLoading(true);
-    const start = Date.now();
     try {
-      await api.signup({
-        name: data.name.trim(),
-        email: data.email.trim().toLowerCase(),
-        phone: INDIA_PREFIX + data.phone.replace(/\D/g, '').slice(0, 10),
-        password: data.password,
-        otpChannel,
-      });
-      toast.success(otpChannel === 'phone' ? 'Verification code sent to your phone.' : 'Verification code sent to your email.');
-      navigate('/verify', {
-        state: {
-          channel: otpChannel === 'phone' ? ('phone' as const) : ('email' as const),
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email.trim(), data.password);
+
+      // Update Firebase display name
+      try {
+        await updateProfile(userCredential.user, { displayName: data.name.trim() });
+      } catch (e) {
+        console.warn('Failed to update Firebase profile:', e);
+      }
+
+      // Force a token refresh so the backend gets a fresh token immediately
+      await userCredential.user.getIdToken(true);
+
+      // Send Firebase email verification — user must verify before logging in
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (e) {
+        console.warn('Failed to send verification email:', e);
+      }
+
+      // Sync additional profile fields (phone, name) to our backend — non-fatal
+      try {
+        const res = await api.signup({
+          name: data.name.trim(),
           email: data.email.trim().toLowerCase(),
           phone: INDIA_PREFIX + data.phone.replace(/\D/g, '').slice(0, 10),
-        },
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Request failed';
-      toast.error(msg.toLowerCase().includes('invalid input') ? 'Invalid email' : msg);
+        });
+        if (res.user) {
+          setUser(res.user);
+        }
+      } catch (syncErr) {
+        // Backend sync is best-effort — Firebase account was created successfully
+        console.warn('Backend profile sync failed (non-fatal):', syncErr);
+      }
+
+      toast.success('Account created! Please verify your email before logging in.');
+      navigate('/verify-email');
+    } catch (e: any) {
+      // Map Firebase error codes to friendly messages
+      const code: string = e?.code ?? '';
+      const msg: string = e?.message ?? 'Signup failed';
+      let displayMsg = msg;
+
+      if (code === 'auth/email-already-in-use' || msg.includes('email-already-in-use')) {
+        displayMsg = 'This email is already registered. Please login instead.';
+      } else if (code === 'auth/weak-password' || msg.includes('weak-password')) {
+        displayMsg = 'Password is too weak. Use 8+ characters with upper, lower and a number.';
+      } else if (code === 'auth/invalid-email' || msg.includes('invalid-email')) {
+        displayMsg = 'Invalid email address.';
+      } else if (code === 'auth/too-many-requests' || msg.includes('too-many-requests')) {
+        displayMsg = 'Too many attempts. Please try again later.';
+      } else if (code === 'auth/network-request-failed' || msg.includes('network')) {
+        displayMsg = 'Network error. Check your connection and try again.';
+      } else if (code === 'auth/popup-closed-by-user' || msg.includes('popup')) {
+        displayMsg = 'Sign-in was interrupted. Please try again.';
+      } else if (code === 'auth/cancelled-popup-request') {
+        displayMsg = 'Another sign-in is already in progress.';
+      } else if (code.startsWith('auth/')) {
+        displayMsg = `Sign-up error: ${code.replace('auth/', '').replace(/-/g, ' ')}.`;
+      }
+
+      toast.error(displayMsg);
     } finally {
-      setTimeout(() => setLoading(false), Math.max(0, 2000 - (Date.now() - start)));
+      setLoading(false);
     }
   };
 
@@ -130,21 +173,10 @@ export function SignupPage() {
             ) : errors.confirmPassword ? <span className={s.fieldError} role="alert">{errors.confirmPassword.message}</span> : null}
           </div>
         </div>
-        <div className={s.inputGroup}>
-          <label className={s.label}>Send verification code to</label>
-          <RadioGroup
-            layout="horizontal"
-            value={otpChannel}
-            onChange={(_e, data) => setOtpChannel(data.value as SignupOtpChannel)}
-            className={s.otpChannelRow}
-          >
-            <Radio value="email" label="Email" />
-            <Radio value="phone" label="Phone" />
-          </RadioGroup>
-        </div>
+
         <div className={s.submitRow}>
           <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Sending…' : 'Send OTP'}
+            {loading ? 'Creating Account…' : 'Sign Up'}
           </Button>
         </div>
       </form>

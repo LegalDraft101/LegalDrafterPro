@@ -1,64 +1,166 @@
-.main-content {
-    flex: 1;
-    padding: 4rem 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4rem;
+.home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5rem 2rem 4rem;
+  gap: 4rem;
 }
 
-.hero-section {
-    text-align: center;
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    animation: fadeIn 0.8s ease-out;
+/* ── Hero ── */
+.home__hero {
+  text-align: center;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  animation: heroIn 0.7s ease-out both;
 }
 
-.hero-subtitle {
-    font-size: 1.25rem;
+.home__hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
 
-    .light-mode & {
-        color: #4a5568;
+.home__title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+}
+
+.home__title-accent {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 40%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.home__subtitle {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 500px;
+  margin: 0;
+}
+
+/* ── Service Cards ── */
+.home__services {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 720px;
+  animation: heroIn 0.7s 0.15s ease-out both;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2rem 1.75rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(139, 92, 246, 0.04), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.08);
+
+    &::before {
+      opacity: 1;
     }
 
-    .dark-mode & {
-        color: #9ca3af;
+    .home__card-action {
+      color: #60a5fa;
+
+      span {
+        transform: translateX(4px);
+      }
     }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
 }
 
-.cta-button {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 0.75rem 2rem;
-    box-shadow: 0 4px 14px 0 rgba(0, 118, 214, 0.39);
-    transition: transform 0.2s, box-shadow 0.2s;
+.home__card-icon {
+  font-size: 2rem;
+  line-height: 1;
 }
 
-.cta-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 118, 214, 0.4);
+.home__card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    width: 100%;
-    max-width: 1200px;
-    padding: 0 1rem;
+.home__card-desc {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+.home__card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: auto;
+  padding-top: 8px;
+  transition: color 0.25s ease;
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  span {
+    display: inline-block;
+    transition: transform 0.25s ease;
+  }
+}
+
+/* ── Animation ── */
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

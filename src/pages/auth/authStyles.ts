@@ -8,9 +8,9 @@ export const useAuthFormStyles = makeStyles({
     marginBottom: '12px',
   },
   label: {
-    fontSize: '13px',
-    fontWeight: 500,
-    color: tokens.colorNeutralForeground1,
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#334155', // Slate 700 - very dark grey/blue for high contrast
   },
   fieldError: {
     fontSize: '12px',

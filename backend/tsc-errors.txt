@@ -1,0 +1,5 @@
+src/middleware/index.ts(67,5): error TS2739: Type '{ sub: string; tokenVersion: number; name: string; phone: string; }' is missing the following properties from type 'JwtPayload': email, iat, exp
+src/routes/authRoutes.ts(4,10): error TS2305: Module '"../services"' has no exported member 'initPassport'.
+src/routes/authRoutes.ts(4,24): error TS2305: Module '"../services"' has no exported member 'googleAuthMiddleware'.
+src/routes/authRoutes.ts(4,46): error TS2305: Module '"../services"' has no exported member 'googleCbMiddleware'.
+src/routes/authRoutes.ts(4,66): error TS2305: Module '"../services"' has no exported member 'isGoogleAuthConfigured'.

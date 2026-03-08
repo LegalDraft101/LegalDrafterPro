@@ -3,6 +3,7 @@
  * Uses credentials: 'include' for HttpOnly cookies. No PII/tokens in frontend.
  * VITE_API_URL: leave empty in dev (use Vite proxy); or set to API origin with no path (e.g. http://localhost:4000).
  */
+import { auth } from '../lib/firebase';
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
@@ -27,17 +28,29 @@ export async function request<T>(
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   const url = buildUrl(path);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init.headers as Record<string, string>),
+  };
+
+  try {
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // ignore if token fetch fails
+  }
+
   const res = await fetch(url, {
     ...init,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers as Record<string, string>),
-    },
+    credentials: 'omit', // Firebase tokens replace cookies
+    headers,
     signal: controller.signal,
   });
   clearTimeout(id);
-  const data = (await res.json().catch(() => ({}))) as { error?: string; [k: string]: unknown };
+  const data = (await res.json().catch(() => ({}))) as { error?: string;[k: string]: unknown };
   if (!res.ok) {
     if (allow401 && res.status === 401) return null as T;
     let errMsg = data.error ?? `Request failed: ${res.status}`;

@@ -31,6 +31,15 @@ export interface VerifyOtpPayload {
   code: string;
 }
 
+export interface VerifySignupPayload {
+  name: string;
+  email: string;
+  phone: string;
+  password?: string;
+  emailCode: string;
+  phoneCode: string;
+}
+
 export interface ForgotPasswordPayload {
   channel: 'email' | 'phone';
   email?: string;
