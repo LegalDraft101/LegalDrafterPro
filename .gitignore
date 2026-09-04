@@ -7,25 +7,33 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node modules & build outputs
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# Environment variables
+.env
+**/.env
+*.env
+!.env.example
+
+# OS & Editor files
+.DS_Store
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
-*.ntvs*
-*.njsproj
-*.sln
 *.sw?
 
-# Backend
-.env
-backend/.env
-backend/error.log
+# Backend generated files & uploads
+backend/data/drafts/submissions/*
+backend/data/drafts/documents/*
+backend/data/drafts/uploads/*
 backend/file_storage/generated_affidavits/*
+backend/file_storage/generated_rent_agreements/*
 !backend/file_storage/generated_affidavits/.gitkeep
+!backend/file_storage/generated_rent_agreements/.gitkeep
