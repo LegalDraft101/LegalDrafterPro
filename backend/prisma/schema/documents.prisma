@@ -1,0 +1,16 @@
+model Document {
+  id             String   @id @default(uuid())
+  documentNumber String?  @map("document_number")
+  documentUrl    String   @map("document_url")
+  documentType   String   @map("document_type")
+  status         String   @default("Draft")
+  createdBy      String   @map("created_by")
+  user           User     @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  orders Order[]
+  eSigns ESign[]
+
+  @@map("documents")
+}

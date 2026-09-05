@@ -5,13 +5,28 @@
   "description": "Legal Drafter Pro Backend API",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "npx ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "npm install --include=dev && npx tsc && node -e \"require('fs').existsSync('dist/server.js') || process.exit(1)\"",
+    "prisma:generate": "prisma generate",
+    "prisma:db-push": "prisma db push",
+    "dev": "nodemon",
+    "dev:legacy": "prisma generate && npx ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "npm install --include=dev && prisma generate && npx tsc && node -e \"require('fs').existsSync('dist/server.js') || process.exit(1)\"",
     "start": "node dist/server.js",
     "test": "jest --passWithNoTests"
   },
+  "nodemon": {
+    "watch": [
+      "src",
+      "prisma/schema"
+    ],
+    "ext": "ts,json,prisma",
+    "ignore": [
+      "src/**/*.spec.ts",
+      "dist"
+    ],
+    "exec": "prisma generate && ts-node src/server.ts"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.98.0",
+    "@prisma/client": "^6.4.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "docx": "^9.6.0",
@@ -34,6 +49,9 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^25.3.3",
     "@types/pdf-parse": "^1.1.5",
+    "nodemon": "^3.1.14",
+    "prisma": "^6.4.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }

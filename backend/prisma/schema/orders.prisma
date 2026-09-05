@@ -1,0 +1,75 @@
+model Order {
+  id                    String   @id @default(uuid())
+  displayId             String   @unique @map("display_id")
+  userId                String   @map("user_id")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  documentId            String?  @map("document_id")
+  document              Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  templateId            String?  @map("template_id")
+  userTemplateIndicator Boolean  @default(false) @map("user_template_indicator")
+  stampId               String?  @map("stamp_id")
+  isCompleted           Boolean  @default(false) @map("is_completed")
+  status                String   @default("Draft")
+  firstParty            String?  @map("first_party")
+  secondParty           String?  @map("second_party")
+  purchasedBy           String?  @map("purchased_by")
+  dutyPaidBy            String?  @map("duty_paid_by")
+  purpose               String?
+  articleCode           String?  @map("article_code")
+  considerationPrice    Decimal? @map("consideration_price")
+  quantity              Decimal?
+  denomination          Decimal?
+  refId                 String?  @map("ref_id")
+  doorstepDelivery      Boolean  @default(false) @map("doorstep_delivery")
+  userInputDetails      Json?    @map("user_input_details")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+
+  pricing         OrderPricing?
+  deliveryAddress OrderDeliveryAddress?
+  eSigns          ESign[]
+  payments        PaymentTransaction[]
+
+  @@map("orders")
+}
+
+model OrderPricing {
+  id             String   @id @default(uuid())
+  orderId        String   @unique @map("order_id")
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  state          String
+  quantity       Decimal
+  denomination   Decimal
+  stampValue     Decimal  @map("stamp_value")
+  serviceCharge  Decimal  @default(0) @map("service_charge")
+  shippingCharge Decimal  @default(0) @map("shipping_charge")
+  gst            Decimal  @default(0)
+  totalAmount    Decimal  @map("total_amount")
+  currency       String   @default("INR")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("order_pricing")
+}
+
+model OrderDeliveryAddress {
+  id                 String    @id @default(uuid())
+  orderId            String    @unique @map("order_id")
+  order              Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receiverName       String    @map("receiver_name")
+  phone              String?
+  altPhone           String?   @map("alt_phone")
+  addressLine1       String    @map("address_line1")
+  addressLine2       String?   @map("address_line2")
+  city               String
+  state              String
+  pincode            String
+  deliveryService    String?   @map("delivery_service")
+  deliveryTrackingId String?   @map("delivery_tracking_id")
+  dispatchedAt       DateTime? @map("dispatched_at")
+  deliveryStatus     String?   @map("delivery_status")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("order_delivery_addresses")
+}

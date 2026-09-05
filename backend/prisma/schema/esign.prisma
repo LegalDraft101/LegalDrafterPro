@@ -1,0 +1,22 @@
+model ESign {
+  uid                String
+  signatoryEmail     String    @map("signatory_email")
+  externalDocumentId String?   @map("external_document_id")
+  orderId            String    @map("order_id")
+  order              Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  documentId         String    @map("document_id")
+  document           Document  @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  stampId            String?   @map("stamp_id")
+  signMethod         String    @default("Aadhaar") @map("sign_method")
+  documentName       String    @map("document_name")
+  signatoryName      String    @map("signatory_name")
+  signatoryPhone     String    @map("signatory_phone")
+  signatoryStatus    String    @default("Pending") @map("signatory_status")
+  signUrl            String?   @map("sign_url")
+  signedAt           DateTime? @map("signed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@id([uid, signatoryEmail])
+  @@map("esign")
+}

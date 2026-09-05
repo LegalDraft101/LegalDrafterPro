@@ -1,21 +1,12 @@
-import { supabase } from '../../config/supabase';
+import { prisma } from '../../lib/prisma';
 import type { DbHealthStatus, HealthCheckResponse } from './health.schema';
 
 export async function checkDbHealth(): Promise<DbHealthStatus> {
   const start = Date.now();
 
   try {
-    const { data, error } = await supabase.rpc('check_db_reachable');
+    await prisma.$queryRaw`SELECT 1`;
     const latencyMs = Date.now() - start;
-
-    if (error) {
-      return { status: 'down', latencyMs, error: error.message };
-    }
-
-    if (data !== true) {
-      return { status: 'down', latencyMs, error: 'Database reachability check returned an unexpected result.' };
-    }
-
     return { status: 'up', latencyMs };
   } catch (err: unknown) {
     const latencyMs = Date.now() - start;
