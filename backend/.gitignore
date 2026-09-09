@@ -7,3 +7,6 @@ data/drafts/uploads/
 file_storage/generated_affidavits/*.pdf
 file_storage/generated_rent_agreements/*.pdf
 legaldrafterpro-17112-firebase-adminsdk-fbsvc-dde9c7d988.json
+# Firebase Admin service-account credentials are server secrets.
+firebase-service-account.json
+*-firebase-adminsdk-*.json

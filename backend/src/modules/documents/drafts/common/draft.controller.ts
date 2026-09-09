@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
-import { readJsonData, getDocumentPath, saveUploadFile } from './draft.service';
+import { readJsonData, saveUploadFile } from './draft.service';
 import { generateAffidavit } from '../../document.service';
+import type { AuthRequest } from '../../../../middleware/auth.middleware';
+import { prisma } from '../../../../lib/prisma';
 
 export function getAffidavitTypes(_req: Request, res: Response): void {
   const data = readJsonData<unknown[]>('affidavit-types.json');
@@ -48,7 +50,7 @@ export function getRentAgreementForm(req: Request, res: Response): void {
   res.json(data);
 }
 
-export async function generateAffidavitDocument(req: Request, res: Response): Promise<void> {
+export async function generateAffidavitDocument(req: AuthRequest, res: Response): Promise<void> {
   const typeId = req.params.typeId as string;
   if (!typeId || !/^[a-z0-9-]+$/.test(typeId)) {
     res.status(400).json({ error: 'Invalid type id' });
@@ -62,7 +64,11 @@ export async function generateAffidavitDocument(req: Request, res: Response): Pr
   }
 
   try {
-    const result = await generateAffidavit(typeId, formData);
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const result = await generateAffidavit(typeId, formData, req.user.sub);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${result.draftId}.docx"`);
@@ -75,14 +81,19 @@ export async function generateAffidavitDocument(req: Request, res: Response): Pr
   }
 }
 
-export function downloadDraft(req: Request, res: Response): void {
+export async function downloadDraft(req: AuthRequest, res: Response): Promise<void> {
   const draftId = req.params.draftId as string;
   if (!draftId || !/^[a-z0-9-]+$/.test(draftId)) {
     res.status(400).json({ error: 'Invalid draft id' });
     return;
   }
 
-  const docPath = getDocumentPath(draftId);
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const document = await prisma.document.findFirst({ where: { id: draftId, createdBy: req.user.sub } });
+  const docPath = document?.documentUrl || null;
   if (!docPath) {
     res.status(404).json({ error: 'Document not found' });
     return;

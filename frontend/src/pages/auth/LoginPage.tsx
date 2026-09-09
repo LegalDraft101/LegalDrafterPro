@@ -1,232 +1,168 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import {
-  Button,
-  Input,
-  MessageBar,
-  MessageBarBody,
-} from '@fluentui/react-components';
-import { EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
-import { AuthLayout, GoogleIcon } from '../../components/common/Shared/Shared';
-import { emailSchema, isEmailTechnicallyCorrect, passwordSchema } from '../../lib/validation';
-import { useAuthFormStyles } from './authStyles';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Input } from '@fluentui/react-components';
+import { GoogleAuthProvider, signInWithPopup, type ConfirmationResult } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
-
-declare global {
-  interface Window {
-    confirmationResult?: ConfirmationResult;
-  }
-}
-
-const loginSchema = z.object({
-  emailOrPhone: z.string().trim().min(1, 'Add a valid email address').refine(
-    (val) => {
-      const v = val.replace(/\s/g, '');
-      if (v.includes('@') || (!v.startsWith('+') && !/^\d/.test(v))) return emailSchema.safeParse(val).success;
-      if (/^\+[1-9]\d{1,14}$/.test(v)) return true;
-      if (/^\d{10}$/.test(v)) return true;
-      return false;
-    },
-    'Add a valid email address'
-  ),
-  password: z.string().refine((val) => !val || passwordSchema.safeParse(val).success,
-    'Password must have uppercase, lowercase and a number'
-  ),
-});
-
+import { api } from '../../api';
 import { fetchUser } from '../../store/slices/authSlice';
 import { useAppDispatch } from '../../store/hooks';
-import { authApi } from '../../api/auth';
+import { AuthLayout, GoogleIcon } from '../../components/common/Shared/Shared';
+import { useAuthFormStyles } from './authStyles';
+import { toast } from 'sonner';
+import { signOut } from 'firebase/auth';
+import { sendOtp, verifyOtp } from '../../lib/firebasePhone';
+
+const normalizePhone = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length === 10) return `+91${digits}`;
+  return value.trim();
+};
 
 export function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const styles = useAuthFormStyles();
+  const [mode, setMode] = useState<'phone' | 'email'>('phone');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [otpId, setOtpId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const s = useAuthFormStyles();
-  const { register, handleSubmit, clearErrors, watch, formState: { errors } } = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
-  });
-  const emailOrPhoneValue = watch('emailOrPhone', '');
-  const passwordValue = watch('password', '');
-  const isEmailField = (emailOrPhoneValue || '').trim().includes('@');
-  const emailValid = isEmailField && isEmailTechnicallyCorrect(emailOrPhoneValue);
-  void emailValid;
-  const urlError = searchParams.get('error');
-  const isGoogleNotConfigured = urlError === 'google_not_configured';
-  const isGoogleFailed = urlError === 'google_failed';
+  const [phoneConfirmation, setPhoneConfirmation] = useState<ConfirmationResult | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
 
   useEffect(() => {
-    if (urlError === 'google_failed') {
-      toast.error('Google sign-in failed. Please try again or use email/phone.');
-      setSearchParams({}, { replace: true });
-    }
-  }, [urlError, setSearchParams]);
+    if (resendSeconds <= 0) return undefined;
+    const timer = window.setInterval(() => setResendSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
 
-  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+  const finish = async (keepFirebaseSession = false) => {
+    if (!keepFirebaseSession) await signOut(auth).catch(() => undefined);
+    await dispatch(fetchUser());
+    navigate('/');
+  };
+
+  const submit = async () => {
     setLoading(true);
     try {
-      const trimmed = data.emailOrPhone.trim();
-      const isEmail = trimmed.includes('@');
+      if (otpId) {
+        await api.emailLoginVerify({ otpId, code });
+        await finish();
+        return;
+      }
 
-      if (isEmail) {
-        if (!data.password) {
-          toast.error('Password is required for email login.');
-          setLoading(false);
+      if (mode === 'phone') {
+        if (!phoneConfirmation) {
+          const e164 = normalizePhone(identifier);
+          if (!/^\+[1-9]\d{7,14}$/.test(e164)) {
+            toast.error('Enter a valid phone number in E.164 format.');
+            return;
+          }
+          const confirmation = await sendOtp(e164);
+          setPhoneConfirmation(confirmation);
+          setOtpSent(true);
+          toast.success(`OTP sent to ${e164}`);
           return;
         }
-        await signInWithEmailAndPassword(auth, trimmed.toLowerCase(), data.password);
 
-        setTimeout(async () => {
-          await dispatch(fetchUser());
-          toast.success('Logged in successfully!');
-          navigate('/');
-        }, 500);
-      } else {
-        // Phone Auth
-        const normalized = trimmed.replace(/\D/g, '').length === 10 ? '+91' + trimmed.replace(/\D/g, '') : trimmed;
-
-        if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-          });
+        const { idToken } = await verifyOtp(phoneConfirmation, code);
+        if (!idToken) {
+          throw new Error('No Firebase ID token returned.');
         }
-
-        const confirmationResult = await signInWithPhoneNumber(auth, normalized, window.recaptchaVerifier);
-        window.confirmationResult = confirmationResult;
-
-        toast.success('OTP sent to your phone.');
-        navigate('/verify', { state: { channel: 'phone', phone: normalized } });
+        await api.verifyPhone();
+        await finish(true);
+        return;
       }
-    } catch (e: any) {
-      const msg = e.message || 'Login failed';
-      toast.error(msg);
-      // clean up recaptcha on error so they can try again
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = undefined;
+
+      const email = identifier.trim().toLowerCase();
+      if (!emailOtpSent) {
+        await api.emailOtpSend(email);
+        setEmailOtpSent(true);
+        setResendSeconds(45);
+        toast.success('Verification code sent to your email.');
+      } else {
+        await api.emailOtpVerify(email, code);
+        await finish();
       }
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed.');
     } finally {
       setLoading(false);
     }
   };
 
-  const onFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubmit(onSubmit, () => toast.error('Please fix the errors below.'))(e);
-  };
-
-  const handleGoogle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const google = async () => {
+    setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      try {
-        await authApi.googleCreate();
-      } catch {
-        // DB record may already exist; fetchUser will handle it
-      }
-      await dispatch(fetchUser());
-      toast.success('Logged in with Google!');
-      navigate('/');
-    } catch (err: any) {
-      toast.error(err.message || 'Google sign-in failed. Try again.');
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      await api.googleCreate();
+      await finish(true);
+    } catch (error: any) {
+      toast.error(error.message || 'Google sign-in failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <AuthLayout
-      title="Welcome Back"
-      subtitle="Please login to your account"
-      backLink={{ label: 'Back to home', to: '/' }}
-      signupPrompt={{ text: "Don't have an account? ", linkText: 'Signup', to: '/signup' }}
-      extra={
-        <>
-          {isGoogleNotConfigured && (
-            <MessageBar intent="error" role="alert" style={{ marginBottom: 12 }}>
-              <MessageBarBody>Login with Google is not configured. Use email/phone below.</MessageBarBody>
-            </MessageBar>
-          )}
-          {isGoogleFailed && (
-            <MessageBar intent="error" role="alert" style={{ marginBottom: 12 }}>
-              <MessageBarBody>Google sign-in failed. Try again or use email/phone below.</MessageBarBody>
-            </MessageBar>
-          )}
-          <div className="divider">Or Login with</div>
-          <div className={s.socialRow}>
-            <button type="button" className="google-btn" onClick={handleGoogle} aria-label="Login with Google">
-              <GoogleIcon size={18} />
-              Continue with Google
-            </button>
+  const resetPhoneFlow = () => {
+    setPhoneConfirmation(null);
+    setOtpSent(false);
+    setCode('');
+  };
+
+  const resendEmailOtp = async () => {
+    setLoading(true);
+    try {
+      await api.emailOtpSend(identifier.trim().toLowerCase());
+      setCode('');
+      setResendSeconds(45);
+      toast.success('A new verification code was sent.');
+    } catch (error: any) {
+      toast.error(error.message || 'Unable to resend the verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetEmailFlow = () => {
+    setEmailOtpSent(false);
+    setResendSeconds(0);
+    setCode('');
+  };
+
+  return <AuthLayout title="Welcome Back" subtitle="Sign in with Google, phone, or email" backLink={{ label: 'Back to home', to: '/' }} signupPrompt={{ text: "Don't have an account? ", linkText: 'Signup', to: '/signup' }} extra={<><div className="divider">Or continue with</div><button type="button" className="google-btn" onClick={google}><GoogleIcon size={18} /> Continue with Google</button></>}>
+    <div className={styles.socialRow}><Button appearance={mode === 'phone' ? 'primary' : 'outline'} onClick={() => { setMode('phone'); setOtpId(''); resetPhoneFlow(); resetEmailFlow(); }}>Phone</Button><Button appearance={mode === 'email' ? 'primary' : 'outline'} onClick={() => { setMode('email'); setOtpId(''); resetPhoneFlow(); resetEmailFlow(); }}>Email</Button></div>
+
+    {mode === 'phone' ? (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+        {!otpSent ? (
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Phone Number</label>
+            <Input value={identifier} onChange={(_, data) => setIdentifier(data.value)} placeholder="+91 ________" />
           </div>
-        </>
-      }
-    >
-      <form onSubmit={onFormSubmit} noValidate>
-        <div className={s.inputGroup}>
-          <label htmlFor="emailOrPhone" className={s.label}>Email address</label>
-          <Input
-            id="emailOrPhone"
-            type="text"
-            placeholder="Email address"
-            autoComplete="email"
-            {...register('emailOrPhone', { onChange: () => clearErrors('emailOrPhone') })}
-          />
-          {errors.emailOrPhone && (
-            <div className={s.errorBox} role="alert">
-              <span className={s.errorIcon} aria-hidden>!</span>
-              <span>{(errors.emailOrPhone.message || '').replace(/invalid input/i, 'Invalid email')}</span>
+        ) : (
+          <>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>OTP sent to {normalizePhone(identifier) || 'your phone'}</label>
+              <Input value={code} onChange={(_, data) => setCode(data.value)} placeholder="Enter OTP" inputMode="numeric" maxLength={6} />
             </div>
-          )}
-        </div>
-        <div className={s.inputGroup}>
-          <label htmlFor="password" className={s.label}>Password</label>
-          <div className={s.inputWrapper}>
-            <Input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              autoComplete="current-password"
-              style={{ width: '100%' }}
-              contentAfter={
-                <Button
-                  appearance="transparent"
-                  size="small"
-                  icon={showPassword ? <EyeOffRegular /> : <EyeRegular />}
-                  onClick={() => setShowPassword((p) => !p)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                />
-              }
-              {...register('password', { onChange: () => clearErrors('password') })}
-            />
-          </div>
-          {errors.password && (
-            <div className={s.errorBox} role="alert">
-              <span className={s.errorIcon} aria-hidden>!</span>
-              <span>
-                {String(passwordValue ?? '').trim().length < 8 ? 'Minimum 8 characters' : 'Password must have uppercase, lowercase and a number'}
-              </span>
-            </div>
-          )}
-        </div>
-        <div className={s.forgotRow}>
-          <Link to="/forgot-password" className={s.forgotLink}>Forgot password?</Link>
-        </div>
-        <div className={s.submitRow}>
-          <div id="recaptcha-container"></div>
-          <Button type="submit" appearance="primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Sending…' : 'Login'}
-          </Button>
-        </div>
-      </form>
-    </AuthLayout>
-  );
+            <Button appearance="subtle" disabled={loading} onClick={resetPhoneFlow} style={{ width: '100%' }}>Change phone number</Button>
+          </>
+        )}
+      </div>
+    ) : (
+      <>
+        <div className={styles.inputGroup}><label className={styles.label}>Email address</label><Input value={identifier} onChange={(_, data) => setIdentifier(data.value)} placeholder="user@example.com" disabled={emailOtpSent} /></div>
+        {emailOtpSent && <div className={styles.inputGroup}><label className={styles.label}>Enter the 6-digit code sent to {identifier.trim().toLowerCase()}</label><Input value={code} onChange={(_, data) => setCode(data.value)} placeholder="000000" inputMode="numeric" maxLength={6} /></div>}
+        {emailOtpSent && <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}><Button appearance="subtle" disabled={loading || resendSeconds > 0} onClick={resendEmailOtp}>{resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}</Button><Button appearance="subtle" disabled={loading} onClick={resetEmailFlow}>Change email</Button></div>}
+      </>
+    )}
+
+    <Button appearance="primary" disabled={loading} onClick={submit} style={{ width: '100%' }}>
+      {mode === 'phone' ? (otpSent ? 'Verify OTP' : 'Send OTP') : emailOtpSent ? 'Verify Email' : 'Send OTP'}
+    </Button>
+  </AuthLayout>;
 }

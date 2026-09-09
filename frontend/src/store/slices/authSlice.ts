@@ -2,13 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../../api/auth';
 import { auth } from '../../lib/firebase';
 import { signOut } from 'firebase/auth';
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-}
+import type { AuthUser } from '../../api/types';
 
 interface AuthState {
   user: AuthUser | null;
@@ -56,9 +50,13 @@ export const fetchUser = createAsyncThunk('auth/fetchUser', async (_, { rejectWi
 
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
-    await signOut(auth); // Firebase sign out clears local token
-    await authApi.logout(); // Optional: clears any backend session cookie if we still have one
+    // Send the still-valid Firebase ID token so the backend can revoke its
+    // refresh tokens; signing out locally first would make that impossible.
+    await authApi.logout();
+    await signOut(auth);
   } catch {
+    // Always remove the local session even if the network is unavailable.
+    await signOut(auth).catch(() => undefined);
     return rejectWithValue(null);
   }
 });

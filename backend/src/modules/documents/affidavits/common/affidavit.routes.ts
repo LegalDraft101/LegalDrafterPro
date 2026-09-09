@@ -6,6 +6,7 @@ import {
   fetchAffidavitFormatById,
   saveAffidavitFile,
 } from './affidavit.controller';
+import { authGuard } from '../../../../middleware/auth.middleware';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -22,6 +23,6 @@ const router = Router();
 
 router.get('/formats', fetchAllAffidavitFormats);
 router.get('/formats/:id', fetchAffidavitFormatById);
-router.post('/save', upload.single('pdfFile'), saveAffidavitFile);
+router.post('/save', authGuard, upload.single('pdfFile'), saveAffidavitFile);
 
 export default router;

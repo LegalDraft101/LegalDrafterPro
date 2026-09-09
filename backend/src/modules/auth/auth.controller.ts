@@ -1,7 +1,10 @@
 import type { Response, NextFunction } from 'express';
 import { isValidName } from '../../utils/helpers';
-import { createUser, findUserByEmail } from '../users/user.queries';
+import { createUser, findUserByEmail, findUserByFirebaseUid, findUserById, linkFirebaseUid } from '../users/user.queries';
+import { toApiUser } from '../users/user.types';
 import type { AuthRequest } from '../../middleware/auth.middleware';
+import { adminAuth } from '../../config/firebase';
+import { clearSession } from './local-auth';
 
 /**
  * POST /auth/signup
@@ -42,17 +45,28 @@ export async function signup(req: AuthRequest, res: Response, next: NextFunction
       return;
     }
 
+    const existingByUid = await findUserByFirebaseUid(uid);
+    if (existingByUid) {
+      res.status(200).json({ status: 'ok', user: { id: existingByUid.id, name: existingByUid.name, email: existingByUid.email, phone: existingByUid.phone } });
+      return;
+    }
+    const existingByEmail = await findUserByEmail(email);
+    if (existingByEmail && existingByEmail.firebaseUid !== uid) {
+      res.status(409).json({ error: 'This email is already linked to a different account.' });
+      return;
+    }
+
     try {
       const user = await createUser({
         name: cleanName || 'User',
         email,
         phone,
-        googleId: uid,
+        firebaseUid: uid,
       });
 
       res.status(200).json({
         status: 'ok',
-        user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+        user: toApiUser(user),
       });
     } catch (dbError: any) {
       if (dbError.message?.includes('EMAIL_OR_PHONE_EXISTS') || dbError.code === '23505') {
@@ -89,10 +103,12 @@ export async function googleCreate(req: AuthRequest, res: Response, next: NextFu
 
     const existing = await findUserByEmail(email);
     if (existing) {
-      res.status(200).json({
-        status: 'ok',
-        user: { id: existing.id, name: existing.name, email: existing.email, phone: existing.phone },
-      });
+      if (existing.firebaseUid && existing.firebaseUid !== uid) {
+        res.status(409).json({ error: 'This email is already linked to a different Google account.' });
+        return;
+      }
+      const linkedUser = existing.firebaseUid ? existing : await linkFirebaseUid(existing.id, uid);
+      res.status(200).json({ status: 'ok', user: toApiUser(linkedUser) });
       return;
     }
 
@@ -101,12 +117,12 @@ export async function googleCreate(req: AuthRequest, res: Response, next: NextFu
         name: displayName || 'User',
         email,
         phone: fbUser.phone_number || '',
-        googleId: uid,
+        firebaseUid: uid,
       });
 
       res.status(200).json({
         status: 'ok',
-        user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+        user: toApiUser(user),
       });
     } catch (dbError: any) {
       if (dbError.message?.includes('EMAIL_OR_PHONE_EXISTS') || dbError.code === '23505') {
@@ -114,7 +130,7 @@ export async function googleCreate(req: AuthRequest, res: Response, next: NextFu
         if (found) {
           res.status(200).json({
             status: 'ok',
-            user: { id: found.id, name: found.name, email: found.email, phone: found.phone },
+            user: toApiUser(found),
           });
           return;
         }
@@ -135,12 +151,12 @@ export async function me(req: AuthRequest, res: Response, next: NextFunction): P
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    res.status(200).json({
-      id: req.user.sub,
-      name: req.user.name,
-      email: req.user.email,
-      phone: req.user.phone ?? '',
-    });
+    const user = await findUserById(req.user.sub);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.status(200).json(toApiUser(user));
   } catch (e) {
     next(e);
   }
@@ -149,7 +165,15 @@ export async function me(req: AuthRequest, res: Response, next: NextFunction): P
 /**
  * POST /auth/logout
  */
-export function logout(_req: AuthRequest, res: Response): void {
-  res.clearCookie('accessToken', { path: '/', httpOnly: true, sameSite: 'lax' });
-  res.status(200).json({ status: 'ok' });
+export async function logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const firebaseUser = (req as any).firebaseUser;
+    if (!firebaseUser?.uid || !adminAuth) { clearSession(res); res.status(200).json({ status: 'ok' }); return; }
+    // Invalidates refresh tokens and, with checkRevoked in authGuard, prevents
+    // reuse of this session after Firebase has processed the revocation.
+    await adminAuth.revokeRefreshTokens(firebaseUser.uid);
+    res.status(200).json({ status: 'ok' });
+  } catch (error) {
+    next(error);
+  }
 }

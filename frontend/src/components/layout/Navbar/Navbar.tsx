@@ -139,6 +139,15 @@ const useStyles = makeStyles({
       ...shorthands.borderColor('rgba(255, 255, 255, 0.18)'),
     },
   },
+  profileLink: {
+    color: 'inherit',
+    textDecoration: 'none',
+    borderRadius: '100px',
+    ':focus-visible': {
+      outline: '2px solid #60a5fa',
+      outlineOffset: '3px',
+    },
+  },
   userAvatar: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -278,10 +287,12 @@ export function Navbar() {
             <div className={classes.desktopOnly} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {user ? (
                 <>
-                  <div className={classes.userPill}>
-                    <span className={classes.userAvatar}>{getInitials(user.name)}</span>
-                    <span className={classes.userName}>{user.name}</span>
-                  </div>
+                  <Link to="/account" className={classes.profileLink} aria-label="Open profile">
+                    <div className={classes.userPill}>
+                      <span className={classes.userAvatar}>{getInitials(user.name)}</span>
+                      <span className={classes.userName}>{user.name}</span>
+                    </div>
+                  </Link>
                   <Button
                     appearance="subtle"
                     className={classes.logoutBtn}
@@ -293,16 +304,27 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <Link to="/login" style={{ textDecoration: 'none' }}>
-                  <Button
-                    className={classes.loginBtn}
-                    appearance="primary"
-                    icon={<PersonRegular />}
-                    aria-current={isLoginPage ? 'page' : undefined}
-                  >
-                    Sign In
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/login" style={{ textDecoration: 'none' }}>
+                    <Button
+                      className={classes.loginBtn}
+                      appearance="primary"
+                      icon={<PersonRegular />}
+                      aria-current={isLoginPage ? 'page' : undefined}
+                    >
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/signup" style={{ textDecoration: 'none' }}>
+                    <Button
+                      className={classes.loginBtn}
+                      appearance="primary"
+                      icon={<PersonRegular />}
+                    >
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
               )}
             </div>
           )}
@@ -341,20 +363,29 @@ export function Navbar() {
         {!loading && (
           user ? (
             <>
-              <div className={classes.userPill}>
-                <span className={classes.userAvatar}>{getInitials(user.name)}</span>
-                <span className={classes.userName}>{user.name}</span>
-              </div>
+              <Link to="/account" className={classes.profileLink} aria-label="Open profile" onClick={closeMenu}>
+                <div className={classes.userPill}>
+                  <span className={classes.userAvatar}>{getInitials(user.name)}</span>
+                  <span className={classes.userName}>{user.name}</span>
+                </div>
+              </Link>
               <Button appearance="subtle" className={classes.logoutBtn} icon={<SignOutRegular />} onClick={handleLogout}>
                 Logout
               </Button>
             </>
           ) : (
-            <Link to="/login" style={{ textDecoration: 'none' }} onClick={closeMenu}>
-              <Button className={classes.loginBtn} appearance="primary" icon={<PersonRegular />}>
-                Sign In
-              </Button>
-            </Link>
+            <>
+              <Link to="/login" style={{ textDecoration: 'none' }} onClick={closeMenu}>
+                <Button className={classes.loginBtn} appearance="primary" icon={<PersonRegular />}>
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/signup" style={{ textDecoration: 'none' }} onClick={closeMenu}>
+                <Button className={classes.loginBtn} appearance="primary" icon={<PersonRegular />}>
+                  Sign Up
+                </Button>
+              </Link>
+            </>
           )
         )}
       </div>

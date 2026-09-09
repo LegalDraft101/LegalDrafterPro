@@ -6,6 +6,7 @@ import {
   fetchAgreementFormatById,
   saveAgreementFile,
 } from './agreement.controller';
+import { authGuard } from '../../../../middleware/auth.middleware';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -22,6 +23,6 @@ const router = Router();
 
 router.get('/formats', fetchAllAgreementFormats);
 router.get('/formats/:id', fetchAgreementFormatById);
-router.post('/save', upload.single('pdfFile'), saveAgreementFile);
+router.post('/save', authGuard, upload.single('pdfFile'), saveAgreementFile);
 
 export default router;

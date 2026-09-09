@@ -1,6 +1,6 @@
 /**
  * Single place for all API HTTP calls.
- * Uses credentials: 'include' for HttpOnly cookies. No PII/tokens in frontend.
+ * Uses credentials: 'include' for the backend's HttpOnly session cookie.
  * VITE_API_URL: leave empty in dev (use Vite proxy); or set to API origin with no path (e.g. http://localhost:4000).
  */
 import { auth } from '../lib/firebase';
@@ -48,7 +48,7 @@ export async function request<T>(
 
   const res = await fetch(url, {
     ...init,
-    credentials: 'omit', // Firebase tokens replace cookies
+    credentials: 'include',
     headers,
     signal: controller.signal,
   });

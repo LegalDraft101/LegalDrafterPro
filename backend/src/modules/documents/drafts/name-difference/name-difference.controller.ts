@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { createNameDifferenceDraft } from './name-difference.service';
+import type { AuthRequest } from '../../../../middleware/auth.middleware';
 
-export async function generateNameDifference(req: Request, res: Response): Promise<void> {
+export async function generateNameDifference(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const result = await createNameDifferenceDraft(req.body);
+    if (!req.user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+    const result = await createNameDifferenceDraft(req.body, req.user.sub);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${result.draftId}.docx"`);
     res.setHeader('X-Draft-Id', result.draftId);

@@ -1,3 +1,6 @@
+import { env } from '../config/env';
+
+// Central logger keeps timestamped operational events consistent and searchable.
 export const logger = {
   info: (message: string, ...args: any[]) => {
     console.log(`[INFO] ${new Date().toISOString()}: ${message}`, ...args);
@@ -9,7 +12,7 @@ export const logger = {
     console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
   },
   debug: (message: string, ...args: any[]) => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (env.LOG_DEBUG_ENABLED) {
       console.log(`[DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
     }
   },

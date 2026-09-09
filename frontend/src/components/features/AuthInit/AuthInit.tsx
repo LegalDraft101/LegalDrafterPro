@@ -20,7 +20,9 @@ export function AuthInit({ children }: { children: React.ReactNode }) {
         const isSignupInProgress = !!(window as any).pendingSignupData
           || window.location.pathname.startsWith('/signup');
 
-        if (needsEmailVerification && !isSignupInProgress) {
+        if (isSignupInProgress) {
+          dispatch(setLoading(false));
+        } else if (needsEmailVerification) {
           dispatch(setUser(null));
           dispatch(setLoading(false));
           if (!window.location.pathname.startsWith('/verify-email')) {

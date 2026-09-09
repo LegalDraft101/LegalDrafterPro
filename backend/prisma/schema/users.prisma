@@ -4,9 +4,12 @@ model User {
   lastName      String?  @map("last_name")
   displayName   String?  @map("display_name")
   name          String   @default("")
-  email         String   @unique
+  email         String?  @unique
   phone         String?  @unique
-  googleId      String?  @unique @map("google_id")
+  // Kept mapped to the existing column so this change does not require copying data.
+  // Values stored here are Firebase Auth UIDs, not Google provider IDs.
+  firebaseUid   String?  @unique @map("google_id")
+  authMethod    AuthMethod @default(GOOGLE_FIREBASE) @map("auth_method")
   passwordHash  String?  @map("password_hash")
   passwordSalt  String?  @map("password_salt")
   tokenVersion  Int      @default(0) @map("token_version")
@@ -23,8 +26,36 @@ model User {
   documents         Document[]
   orders            Order[]
   payments          PaymentTransaction[]
+  otpRecords        AuthOtp[]
 
   @@map("users")
+}
+
+enum AuthMethod {
+  GOOGLE_FIREBASE
+  PHONE_PASSWORD
+  EMAIL_OTP
+}
+
+model AuthOtp {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose      String
+  target       String
+  codeHash     String    @map("code_hash")
+  codeSalt     String    @map("code_salt")
+  attempts     Int       @default(0)
+  expiresAt    DateTime  @map("expires_at")
+  consumedAt   DateTime? @map("consumed_at")
+  name         String?
+  phone        String?
+  passwordHash String?   @map("password_hash")
+  passwordSalt String?   @map("password_salt")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([target, purpose, expiresAt])
+  @@map("auth_otps")
 }
 
 model UserPreferences {

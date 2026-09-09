@@ -12,6 +12,7 @@ import { createWorker } from 'tesseract.js';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
+import { env } from '../../config/env';
 
 const ALLOWED_MIMETYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp',
@@ -20,11 +21,9 @@ const ALLOWED_MIMETYPES = [
   'application/msword',
 ];
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
-
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_FILE_SIZE },
+  limits: { fileSize: env.OCR_MAX_FILE_SIZE_BYTES },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
       cb(null, true);
@@ -38,7 +37,7 @@ export const uploadSingle = upload.single('file');
 
 const imageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: env.OCR_IMAGE_MAX_FILE_SIZE_BYTES },
   fileFilter: (_req, file, cb) => {
     if (/^image\/(jpeg|png|gif|webp|bmp)$/i.test(file.mimetype)) cb(null, true);
     else cb(new Error('Only image files are allowed'));

@@ -1,80 +1,11 @@
 /**
- * Utils & Helper functions: crypto (OTP/password), JWT, validators.
+ * Shared input normalization and validation helpers.
  */
-import * as crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import type { JwtPayload } from '../modules/users/user.types';
-
-const SCRYPT_N = 16384;
-const SCRYPT_R = 8;
-const SCRYPT_P = 1;
-const KEYLEN = 64;
-const SALT_LEN = 32;
-const SECRET = env.JWT_SECRET;
-const ACCESS_TTL_SEC = env.ACCESS_TOKEN_TTL_DAYS * 24 * 60 * 60;
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const TECHNICAL_EMAIL_REGEX = /^[^\s@]+@[^\s@]+$/;
 const E164_REGEX = /^\+[1-9]\d{1,14}$/;
 const INVISIBLE_REGEX = /[\u200B-\u200D\uFEFF]/g;
-
-export function generateOtp(length: number): string {
-  const digits: string[] = [];
-  const bytes = crypto.randomBytes(length);
-  for (let i = 0; i < length; i++) digits.push((bytes[i]! % 10).toString());
-  return digits.join('');
-}
-
-export function hashOtp(code: string): { hash: string; salt: string } {
-  const salt = crypto.randomBytes(SALT_LEN).toString('hex');
-  const hash = crypto.scryptSync(code, salt, KEYLEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
-  return { hash: hash.toString('hex'), salt };
-}
-
-export function verifyOtp(code: string, storedHash: string, salt: string): boolean {
-  const derived = crypto.scryptSync(code, salt, KEYLEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
-  const derivedHex = derived.toString('hex');
-  if (derivedHex.length !== storedHash.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(derivedHex, 'hex'), Buffer.from(storedHash, 'hex'));
-}
-
-export function hashPassword(plain: string): { hash: string; salt: string } {
-  const salt = crypto.randomBytes(SALT_LEN).toString('hex');
-  const hash = crypto.scryptSync(plain, salt, KEYLEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
-  return { hash: hash.toString('hex'), salt };
-}
-
-export function verifyPassword(plain: string, storedHash: string, salt: string): boolean {
-  const derived = crypto.scryptSync(plain, salt, KEYLEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
-  const derivedHex = derived.toString('hex');
-  if (derivedHex.length !== storedHash.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(derivedHex, 'hex'), Buffer.from(storedHash, 'hex'));
-}
-
-export function signAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(
-    {
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      phone: payload.phone,
-      tokenVersion: payload.tokenVersion ?? 0,
-    },
-    SECRET,
-    { expiresIn: ACCESS_TTL_SEC }
-  );
-}
-
-export function verifyAccessToken(token: string): JwtPayload | null {
-  try {
-    const decoded = jwt.decode(token, { complete: true }) as { header?: { alg?: string }; payload?: JwtPayload } | null;
-    if (!decoded?.header || (decoded.header.alg && decoded.header.alg.toLowerCase() === 'none')) return null;
-    return jwt.verify(token, SECRET) as JwtPayload;
-  } catch {
-    return null;
-  }
-}
 
 export function stripInvisible(s: string): string {
   if (typeof s !== 'string') return '';

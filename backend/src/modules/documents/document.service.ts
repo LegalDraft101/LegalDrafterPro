@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx';
 import fs from 'fs';
 import path from 'path';
+import { prisma } from '../../lib/prisma';
 
 const DRAFTS_DIR = path.join(__dirname, '..', '..', '..', 'data', 'drafts');
 const SUBMISSIONS_DIR = path.join(DRAFTS_DIR, 'submissions');
@@ -208,7 +209,8 @@ export interface GenerationResult {
 
 export async function generateAffidavit(
   typeId: string,
-  formData: FormData
+  formData: FormData,
+  userId: string,
 ): Promise<GenerationResult> {
   const builder = TEMPLATE_BUILDERS[typeId];
   if (!builder) {
@@ -225,6 +227,22 @@ export async function generateAffidavit(
 
   const documentPath = path.join(DOCUMENTS_DIR, `${draftId}.docx`);
   fs.writeFileSync(documentPath, buffer);
+
+  try {
+    await prisma.document.create({
+      data: {
+        id: draftId,
+        documentUrl: documentPath,
+        documentType: `affidavit:${typeId}`,
+        createdBy: userId,
+      },
+    });
+  } catch (error) {
+    // Do not leave an untracked document accessible after a database failure.
+    fs.unlinkSync(documentPath);
+    fs.unlinkSync(submissionPath);
+    throw error;
+  }
 
   return { draftId, submissionPath, documentPath, buffer: Buffer.from(buffer) };
 }

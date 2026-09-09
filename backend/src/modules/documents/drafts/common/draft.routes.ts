@@ -14,6 +14,7 @@ import {
   extractContent,
   extractText,
 } from '../../../ocr/ocr.controller';
+import { authGuard } from '../../../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -21,10 +22,10 @@ router.get('/affidavit-types', getAffidavitTypes);
 router.get('/affidavit-forms/:typeId', getAffidavitForm);
 router.get('/rent-agreement-types', getRentAgreementTypes);
 router.get('/rent-agreement-forms/:typeId', getRentAgreementForm);
-router.post('/affidavit/generate/:typeId', generateAffidavitDocument);
-router.get('/affidavit/download/:draftId', downloadDraft);
+router.post('/affidavit/generate/:typeId', authGuard, generateAffidavitDocument);
+router.get('/affidavit/download/:draftId', authGuard, downloadDraft);
 
-router.post('/upload-document', (req, res) => {
+router.post('/upload-document', authGuard, (req, res) => {
   uploadSingle(req, res, (err) => {
     if (err) {
       console.error('[upload-document] upload error:', err);
@@ -34,7 +35,7 @@ router.post('/upload-document', (req, res) => {
   });
 });
 
-router.post('/extract-content', (req, res) => {
+router.post('/extract-content', authGuard, (req, res) => {
   uploadSingle(req, res, (err) => {
     if (err) {
       console.error('[extract-content] upload error:', err);
@@ -47,7 +48,7 @@ router.post('/extract-content', (req, res) => {
   });
 });
 
-router.post('/ocr', (req, res) => {
+router.post('/ocr', authGuard, (req, res) => {
   uploadImageSingle(req, res, (err) => {
     if (err) {
       return res.status(400).json({ error: err.message || 'File upload failed' });

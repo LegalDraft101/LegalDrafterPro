@@ -9,6 +9,66 @@ export interface SignupPayload {
   phone: string;
 }
 
+export interface AuthUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  name: string;
+  email: string;
+  phone: string;
+  authMethod?: 'GOOGLE_FIREBASE' | 'PHONE_PASSWORD' | 'EMAIL_OTP';
+  accountStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProfileResponse {
+  user: AuthUser;
+  profile: { jobTitle: string; avatar: string };
+  preferences: {
+    language: string;
+    theme: string;
+    emailNotifications: boolean;
+    marketingEmails: boolean;
+    whatsappEnabled: boolean;
+    smsNotifications: boolean;
+  };
+  verification: {
+    emailVerified: boolean;
+    phoneVerified: boolean;
+    emailVerifiedAt: string | null;
+    phoneVerifiedAt: string | null;
+  };
+  addresses: UserAddress[];
+  deliveryAddresses: DeliveryAddress[];
+}
+
+export interface UserAddress {
+  id: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  addressType: string;
+  isPrimary: boolean;
+}
+
+export interface DeliveryAddress {
+  id: string;
+  name: string;
+  phone: string | null;
+  altPhone: string | null;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+}
+
 // ---- Drafting (affidavit & rent agreement) ----
 export interface DraftType {
   id: string;
